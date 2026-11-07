@@ -13,7 +13,10 @@ import { ExerciseHub } from './components/ExerciseSession/ExerciseHub';
 import { BadgeCollectionModal } from './components/Reward/BadgeCollectionModal';
 import { soundService } from './services/speechService';
 import { checkUnlockedBadges } from './utils/gameRules';
-import { usePersistentState } from './hooks/usePersistentState';
+import { usePersistentState, isNumberRecord } from './hooks/usePersistentState';
+import { useCloudSync } from './hooks/useCloudSync';
+import { AccountMenu } from './components/Account/AccountMenu';
+import { AppProgress, ProgressSnapshot, isAppProgress, isMascotId } from './types/progress';
 import { Award, BookOpen, Candy, Search, Flame, Mic, Video, GraduationCap } from 'lucide-react';
 
 import { triggerStarMilestoneConfetti, triggerBadgeUnlockedConfetti } from './utils/confetti';
@@ -24,35 +27,6 @@ const STOP_WORD_STARS = 15;
 const FIRST_RECORDING_STARS = 20;
 
 type TabId = 'chart' | 'pairs' | 'exercise' | 'detective' | 'ninja' | 'studio' | 'videos';
-
-interface AppProgress {
-  stars: number;
-  solvedPairs: number;
-  solvedFinalSounds: number;
-  voiceRecordCount: number;
-  practicedStopWordIds: string[];
-  recordedWords: string[];
-}
-
-const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
-const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
-
-function isAppProgress(v: unknown): v is AppProgress {
-  if (typeof v !== 'object' || v === null) return false;
-  const p = v as Record<string, unknown>;
-  return (
-    isCount(p.stars) &&
-    isCount(p.solvedPairs) &&
-    isCount(p.solvedFinalSounds) &&
-    isCount(p.voiceRecordCount) &&
-    isStringArray(p.practicedStopWordIds) &&
-    isStringArray(p.recordedWords)
-  );
-}
-
-function isMascotId(v: unknown): v is MascotId {
-  return typeof v === 'string' && Object.prototype.hasOwnProperty.call(MASCOTS, v);
-}
 
 /** Tiến độ mặc định; giữ lại số sao từ phiên bản cũ (key 'ipa_stars') nếu có. */
 function createInitialProgress(): AppProgress {
@@ -83,6 +57,22 @@ export default function App() {
     isMascotId
   );
   const [progress, setProgress] = usePersistentState<AppProgress>('ipa_progress_v1', createInitialProgress, isAppProgress);
+  const [exerciseBestStars, setExerciseBestStars] = usePersistentState<Record<string, number>>(
+    'ipa_exercise_best_stars_v1',
+    {},
+    isNumberRecord
+  );
+
+  // Đồng bộ với Supabase khi phụ huynh đăng nhập
+  const snapshot = useMemo<ProgressSnapshot>(
+    () => ({ progress, exerciseBestStars, mascot: activeMascot }),
+    [progress, exerciseBestStars, activeMascot]
+  );
+  const cloud = useCloudSync(snapshot, (next) => {
+    setProgress(next.progress);
+    setExerciseBestStars(next.exerciseBestStars);
+    setActiveMascot(next.mascot);
+  });
   const [activeTab, setActiveTab] = useState<TabId>('chart');
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [showMascotSelector, setShowMascotSelector] = useState(false);
@@ -213,6 +203,7 @@ export default function App() {
 
           {/* User Stars & Badges */}
           <div className="flex items-center gap-2">
+            <AccountMenu session={cloud.session} status={cloud.status} onSignOut={cloud.signOut} />
             <div className="flex items-center gap-1.5 bg-amber-50 px-3.5 py-1.5 rounded-2xl border-2 border-amber-300 shadow-xs">
               <span className="text-xl">⭐</span>
               <span className="text-sm font-black text-amber-900">{stars}</span>
@@ -305,7 +296,12 @@ export default function App() {
           />
         )}
         {activeTab === 'exercise' && (
-          <ExerciseHub mascotId={activeMascot} onEarnStars={handleEarnStars} />
+          <ExerciseHub
+            mascotId={activeMascot}
+            onEarnStars={handleEarnStars}
+            bestStars={exerciseBestStars}
+            onBestStarsChange={setExerciseBestStars}
+          />
         )}
 
         {activeTab === 'detective' && (

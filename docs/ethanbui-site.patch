@@ -1,0 +1,28 @@
+diff --git a/next.config.mjs b/next.config.mjs
+index b95d84d..400b768 100644
+--- a/next.config.mjs
++++ b/next.config.mjs
+@@ -35,7 +35,10 @@ const nextConfig = {
+       { source: '/products/owner-copilot/', destination: '/products/owner-copilot/index.html' },
+       { source: '/products/nihongo-flash', destination: 'https://nihongo-flash-five.vercel.app/' },
+       { source: '/products/nihongo-flash/', destination: 'https://nihongo-flash-five.vercel.app/' },
+-      { source: '/products/nihongo-flash/:path*', destination: 'https://nihongo-flash-five.vercel.app/products/nihongo-flash/:path*' }
++      { source: '/products/nihongo-flash/:path*', destination: 'https://nihongo-flash-five.vercel.app/products/nihongo-flash/:path*' },
++      // IPA Kids Galaxy (Vite app, build with base '/products/ipa-for-kids/') on its own Vercel project
++      { source: '/products/ipa-for-kids', destination: 'https://ipa-for-kids.vercel.app/products/ipa-for-kids' },
++      { source: '/products/ipa-for-kids/:path*', destination: 'https://ipa-for-kids.vercel.app/products/ipa-for-kids/:path*' }
+     ];
+   }
+ };
+diff --git a/src/middleware.ts b/src/middleware.ts
+index c2d9a32..3390142 100644
+--- a/src/middleware.ts
++++ b/src/middleware.ts
+@@ -127,6 +127,6 @@ export const config = {
+     '/products/nihongo',
+     '/products/hoc-bo-thu',
+     '/products/owner-copilot',
+-    '/((?!_next|api|products/nihongo|products/hoc-bo-thu|products/owner-copilot|.*\\..*).*)'
++    '/((?!_next|api|products/nihongo|products/hoc-bo-thu|products/owner-copilot|products/ipa-for-kids|.*\\..*).*)'
+   ]
+ };

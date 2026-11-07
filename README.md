@@ -9,17 +9,19 @@
 - **Phòng bài tập**: 15 bộ đề × 6 dạng bài (nghe–khoanh, nối ký hiệu, xếp vào nhà, điền phiên âm, tìm từ khác âm, nhận diện âm).
 - **Mini-game**: Thám Tử Âm Cuối, Ninja Chặn Hơi (unreleased stops).
 - **Studio thu âm**: bé thu giọng mình và so với giọng mẫu US.
-- **Sao & huy hiệu**: tiến độ được lưu trong `localStorage` của trình duyệt.
+- **Sao & huy hiệu**: lưu trên máy; phụ huynh đăng nhập bằng email (Supabase) để đồng bộ giữa các thiết bị.
 
-Giọng đọc mẫu dùng Web Speech API có sẵn trong trình duyệt (`en-US`), hiệu ứng âm thanh dùng Web Audio API. App chạy hoàn toàn phía client, không cần API key hay backend.
+Giọng đọc mẫu dùng Web Speech API có sẵn trong trình duyệt (`en-US`), hiệu ứng âm thanh dùng Web Audio API.
+App là static site (Vite + React), phục vụ tại `https://ethanbui.net/products/ipa-for-kids/`. Xem [DEPLOY.md](DEPLOY.md).
 
 ## Chạy local
 
 Yêu cầu: Node.js 20+ (hoặc Bun).
 
 ```bash
+cp .env.example .env.local   # tuỳ chọn: điền biến Supabase
 npm install
-npm run dev        # http://localhost:3000
+npm run dev                  # http://localhost:3000/products/ipa-for-kids/
 ```
 
 | Lệnh | Mô tả |

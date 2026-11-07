@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/", "destination": "/products/ipa-for-kids", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/products/ipa-for-kids", "destination": "/index.html" },
+    { "source": "/products/ipa-for-kids/:path*", "destination": "/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}

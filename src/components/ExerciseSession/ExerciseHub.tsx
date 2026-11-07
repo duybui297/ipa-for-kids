@@ -11,7 +11,6 @@ import { Exercise6Section } from './Exercise6Section';
 import { FullWorksheetSolutionSheet } from './FullWorksheetSolutionSheet';
 import { PRACTICE_EXAM_SETS, getPracticeSetById } from '../../data/exerciseSets';
 import { soundService } from '../../services/speechService';
-import { usePersistentState, isNumberRecord } from '../../hooks/usePersistentState';
 import {
   GraduationCap,
   ChevronLeft,
@@ -22,6 +21,9 @@ import {
 interface Props {
   mascotId: MascotId;
   onEarnStars: (count: number) => void;
+  /** Sao cao nhất từng đạt ở từng bài (lưu ở App để đồng bộ lên cloud). */
+  bestStars: Record<string, number>;
+  onBestStarsChange: (updater: (prev: Record<string, number>) => Record<string, number>) => void;
 }
 
 export type ExerciseTab = 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'solutions';
@@ -45,7 +47,7 @@ const SET_ICONS: Record<number, string> = {
   15: '🏆'
 };
 
-export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
+export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars, bestStars, onBestStarsChange }) => {
   const [selectedSetId, setSelectedSetId] = useState<number>(1);
   const [activeExercise, setActiveExercise] = useState<ExerciseTab>('b1');
   const [showAllSetsGrid, setShowAllSetsGrid] = useState<boolean>(false);
@@ -56,17 +58,12 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
   // Điểm sao cao nhất bé từng đạt ở từng bài của từng bộ đề.
   // Chỉ cộng thêm phần sao vượt kỷ lục cũ, nên bấm "Kiểm tra" lặp lại
   // hoặc đổi tab rồi làm lại không thể "cày" sao vô hạn.
-  const [bestStars, setBestStars] = usePersistentState<Record<string, number>>(
-    'ipa_exercise_best_stars_v1',
-    {},
-    isNumberRecord
-  );
 
   const makeStarAwarder = (exerciseKey: string) => (stars: number, subKey?: string): number => {
     const key = `set${currentSet.id}:${exerciseKey}${subKey ? `-${subKey}` : ''}`;
     const delta = Math.max(0, stars - (bestStars[key] ?? 0));
     if (delta > 0) {
-      setBestStars((prev) => ({ ...prev, [key]: Math.max(prev[key] ?? 0, stars) }));
+      onBestStarsChange((prev) => ({ ...prev, [key]: Math.max(prev[key] ?? 0, stars) }));
       onEarnStars(delta);
     }
     return delta;
