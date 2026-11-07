@@ -1,7 +1,31 @@
 // US Speech Synthesis & Web Audio Sound Effects Service
 
+const PREFERRED_VOICE_HINTS = ['Natural', 'Google', 'Samantha', 'Zira'];
+
 class SoundService {
   private audioCtx: AudioContext | null = null;
+  private cachedVoice: SpeechSynthesisVoice | null = null;
+
+  constructor() {
+    // Chrome nạp danh sách giọng đọc bất đồng bộ: getVoices() trả về [] ở lần gọi đầu.
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.addEventListener?.('voiceschanged', () => {
+        this.cachedVoice = null;
+      });
+    }
+  }
+
+  private pickUsVoice(): SpeechSynthesisVoice | null {
+    if (this.cachedVoice) return this.cachedVoice;
+    const voices = window.speechSynthesis.getVoices();
+    const isUs = (v: SpeechSynthesisVoice) => /^en[-_]US$/i.test(v.lang);
+    this.cachedVoice =
+      voices.find((v) => isUs(v) && PREFERRED_VOICE_HINTS.some((hint) => v.name.includes(hint))) ||
+      voices.find(isUs) ||
+      voices.find((v) => v.lang.toLowerCase().startsWith('en')) ||
+      null;
+    return this.cachedVoice;
+  }
 
   private getAudioContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -12,7 +36,9 @@ class SoundService {
       }
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
+      this.audioCtx.resume().catch(() => {
+        // Trình duyệt chặn autoplay cho tới khi bé chạm vào trang
+      });
     }
     return this.audioCtx;
   }
@@ -32,11 +58,8 @@ class SoundService {
       utterance.pitch = pitch; // slightly warm/friendly pitch
       utterance.lang = 'en-US';
 
-      // Pick high-quality en-US voice if available
-      const voices = window.speechSynthesis.getVoices();
-      const usVoice = voices.find(
-        (v) => (v.lang === 'en-US' || v.lang.startsWith('en_US')) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Zira'))
-      ) || voices.find((v) => v.lang.startsWith('en'));
+      // Ưu tiên giọng en-US chất lượng cao nếu máy có
+      const usVoice = this.pickUsVoice();
 
       if (usVoice) {
         utterance.voice = usVoice;

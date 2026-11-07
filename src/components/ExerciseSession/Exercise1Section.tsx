@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Volume2, CheckCircle2, XCircle, Sparkles, HelpCircle, RotateCcw } from 'lucide-react';
 import { EXERCISE_1_DATA, Exercise1Question } from '../../data/exerciseWorksheetData';
-import { evaluateExercise1, ScoreResult } from '../../utils/exerciseScoring';
+import { evaluateExercise1, ScoreResult, isRewardEligible, describeReward } from '../../utils/exerciseScoring';
 import { soundService } from '../../services/speechService';
 
 import { triggerExerciseConfetti } from '../../utils/confetti';
 
 interface Props {
-  onEarnStars: (count: number) => void;
+  onEarnStars: (count: number, subKey?: string) => number;
   questions?: Exercise1Question[];
   examSetTitle?: string;
 }
@@ -19,6 +19,7 @@ export const Exercise1Section: React.FC<Props> = ({
 }) => {
   const [answers, setAnswers] = useState<Record<number, 'A' | 'B'>>({});
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null);
+  const [awardedStars, setAwardedStars] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
 
@@ -38,12 +39,13 @@ export const Exercise1Section: React.FC<Props> = ({
   const handleCheckAnswers = () => {
     const result = evaluateExercise1(answers, questions);
     setScoreResult(result);
-    if (result.scorePercent >= 70) {
+    const awarded = isRewardEligible(result) ? onEarnStars(result.starsEarned) : 0;
+    setAwardedStars(awarded);
+    if (isRewardEligible(result)) {
       if (result.scorePercent < 100) {
         soundService.playChime();
       }
       triggerExerciseConfetti(result.scorePercent);
-      onEarnStars(result.starsEarned);
     } else {
       soundService.playError();
     }
@@ -131,7 +133,7 @@ export const Exercise1Section: React.FC<Props> = ({
             </div>
           </div>
           <div className="flex items-center gap-2 font-black text-sm bg-white/80 px-4 py-2 rounded-2xl border shadow-xs">
-            <span>Thưởng: +{scoreResult.starsEarned} sao ⭐</span>
+            <span>{describeReward(scoreResult, awardedStars)}</span>
           </div>
         </div>
       )}

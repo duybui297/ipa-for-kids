@@ -1503,9 +1503,9 @@ export const STOP_SOUND_QUESTIONS: StopSoundQuestion[] = [
 
 export const STICKER_BADGES = [
   { id: 'badge_star', name: 'Chiikawa Star', icon: '⭐', desc: 'Đạt 50 sao phát âm xuất sắc' },
-  { id: 'badge_i_master', name: 'Vua Âm I', icon: '👑', desc: 'Phân biệt siêu chuẩn /iː/ vs /ɪ/' },
-  { id: 'badge_final_detective', name: 'Thám Tử Âm Cuối', icon: '🕵️‍♀️', desc: 'Không bao giờ nuốt âm đuôi' },
-  { id: 'badge_ninja_stop', name: 'Ninja Chặn Hơi', icon: '🥷', desc: 'Làm chủ bí thuật ngắt hơi US' },
-  { id: 'badge_omnom_candy', name: 'Đại Tiệc Kẹo Ngọt', icon: '🍭', desc: 'Cho Om Nom ăn 10 viên kẹo' },
+  { id: 'badge_i_master', name: 'Vua Âm I', icon: '👑', desc: 'Đoán đúng 3 câu đố cặp âm' },
+  { id: 'badge_final_detective', name: 'Thám Tử Âm Cuối', icon: '🕵️‍♀️', desc: 'Bắt đúng 3 âm cuối' },
+  { id: 'badge_ninja_stop', name: 'Ninja Chặn Hơi', icon: '🥷', desc: 'Luyện 4 từ chặn hơi kiểu Mỹ' },
+  { id: 'badge_omnom_candy', name: 'Đại Tiệc Kẹo Ngọt', icon: '🍭', desc: 'Đoán đúng 10 câu đố cặp âm' },
   { id: 'badge_kpop_mic', name: 'Micro Phép Thuật', icon: '🎤', desc: 'Hoàn thành 5 lượt thu âm giọng đọc' },
 ];

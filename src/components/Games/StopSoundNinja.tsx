@@ -1,50 +1,61 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { triggerGameVictoryConfetti } from '../../utils/confetti';
 import { STOP_SOUND_QUESTIONS } from '../../data/ipaData';
 import { MascotId } from '../../types/ipa';
 import { MascotAvatar } from '../Mascot/MascotAvatar';
-import { Volume2, ShieldAlert, Sparkles, Wind, Check, Flame } from 'lucide-react';
+import { Volume2, Sparkles, Wind, Check, Flame } from 'lucide-react';
 import { soundService } from '../../services/speechService';
 
 interface StopSoundNinjaProps {
   mascotId: MascotId;
-  onEarnStars: (stars: number) => void;
+  /** Id các từ bé đã luyện (lưu ở App để không bị reset khi chuyển tab). */
+  practicedWordIds: string[];
+  /** Ghi nhận bé đã luyện một từ; trả về true nếu là lần đầu (được thưởng sao). */
+  onPracticeWord: (wordId: string) => boolean;
 }
 
 export const StopSoundNinja: React.FC<StopSoundNinjaProps> = ({
   mascotId,
-  onEarnStars,
+  practicedWordIds,
+  onPracticeWord,
 }) => {
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0);
-  const [simulatedAirReleased, setSimulatedAirReleased] = useState(false);
   const [isHoldingBreath, setIsHoldingBreath] = useState(false);
-  const [completedList, setCompletedList] = useState<number[]>([]);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const question = STOP_SOUND_QUESTIONS[activeQuestionIdx];
 
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    };
+  }, []);
+
   const handleTestStopSound = () => {
+    if (isHoldingBreath) return; // tránh bấm liên tục khi hiệu ứng đang chạy
+    const practicedQuestion = question;
     setIsHoldingBreath(true);
     soundService.playAirStop();
-    soundService.speakUS(question.audioText, 0.85);
+    soundService.speakUS(practicedQuestion.audioText, 0.85);
 
-    setTimeout(() => {
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
       setIsHoldingBreath(false);
-      if (!completedList.includes(activeQuestionIdx)) {
-        const nextList = [...completedList, activeQuestionIdx];
-        setCompletedList(nextList);
-        onEarnStars(15);
-        if (nextList.length === STOP_SOUND_QUESTIONS.length) {
-          triggerGameVictoryConfetti();
-        } else {
-          confetti({
-            particleCount: 50,
-            spread: 70,
-            origin: { y: 0.7 },
-            colors: ['#ef4444', '#f97316', '#fbbf24', '#ffffff'],
-            shapes: ['circle', 'star'],
-          });
-        }
+      const isFirstTime = onPracticeWord(practicedQuestion.id);
+      if (!isFirstTime) return;
+
+      const practicedCount = new Set([...practicedWordIds, practicedQuestion.id]).size;
+      if (practicedCount === STOP_SOUND_QUESTIONS.length) {
+        triggerGameVictoryConfetti();
+      } else {
+        confetti({
+          particleCount: 50,
+          spread: 70,
+          origin: { y: 0.7 },
+          colors: ['#ef4444', '#f97316', '#fbbf24', '#ffffff'],
+          shapes: ['circle', 'star'],
+        });
       }
     }, 1000);
   };
@@ -123,6 +134,7 @@ export const StopSoundNinja: React.FC<StopSoundNinjaProps> = ({
         {/* Try it button */}
         <button
           onClick={handleTestStopSound}
+          disabled={isHoldingBreath}
           className="mt-5 px-7 py-3.5 bg-linear-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-black rounded-2xl shadow-lg shadow-red-500/30 transition-transform active:scale-95 flex items-center gap-2 cursor-pointer text-sm sm:text-base"
         >
           <Volume2 className="w-5 h-5 animate-bounce" />
@@ -137,7 +149,7 @@ export const StopSoundNinja: React.FC<StopSoundNinjaProps> = ({
         </span>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {STOP_SOUND_QUESTIONS.map((q, idx) => {
-            const isCompleted = completedList.includes(idx);
+            const isCompleted = practicedWordIds.includes(q.id);
             const isActive = activeQuestionIdx === idx;
 
             return (

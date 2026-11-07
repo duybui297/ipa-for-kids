@@ -381,10 +381,10 @@ export const SET_7: PracticeExamSet = {
         { letter: 'A', word: 'scarf', ipa: '/skɑ:f/', vowelSound: '/ɑ:/', meaning: 'khăn quàng' },
         { letter: 'B', word: 'glove', ipa: '/glʌv/', vowelSound: '/ʌ/', meaning: 'găng tay' },
         { letter: 'C', word: 'button', ipa: "/'bʌtn/", vowelSound: '/ʌ/', meaning: 'cúc áo' },
-        { letter: 'D', word: 'belt', ipa: '/belt/', vowelSound: '/e/', meaning: 'thắt lưng' }
+        { letter: 'D', word: 'cuff', ipa: '/kʌf/', vowelSound: '/ʌ/', meaning: 'cổ tay áo' }
       ],
       correctChoice: 'A',
-      explanation: "Đáp án đúng là A: 'scarf' mang âm /ɑ:/ (a dài mở rộng họng). 'glove' và 'button' mang âm /ʌ/, 'belt' mang âm /e/."
+      explanation: "Đáp án đúng là A: 'scarf' mang âm /ɑ:/ (a dài mở rộng họng). 'glove', 'button' và 'cuff' đều mang âm /ʌ/ (ă ngắn)."
     },
     {
       id: 6,

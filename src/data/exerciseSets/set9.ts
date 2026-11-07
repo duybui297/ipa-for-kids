@@ -201,7 +201,7 @@ export const SET_9: PracticeExamSet = {
       { word: 'lookout', ipa: "/'lʊkaʊt/", targetSymbol: '/ʊ/', meaning: 'quan sát' },
       { word: 'move', ipa: '/mu:v/', targetSymbol: '/u:/', meaning: 'chuyển động' },
       { word: 'dock', ipa: '/dɒk/', targetSymbol: '/ɒ/', meaning: 'bến tàu' },
-      { word: 'cross', ipa: '/krɒs/', targetSymbol: '/ɒ/', meaning: 'băng qua đường' },
+      { word: 'hood', ipa: '/hʊd/', targetSymbol: '/ʊ/', meaning: 'nắp capô ô tô' },
       { word: 'hall', ipa: '/hɔ:l/', targetSymbol: '/ɔ:/', meaning: 'nhà ga chính' },
       { word: 'scooter', ipa: "/'sku:tə/", targetSymbol: '/u:/', meaning: 'xe tay ga' }
     ],
@@ -225,7 +225,7 @@ export const SET_9: PracticeExamSet = {
       {
         symbol: '/ʊ/',
         soundName: 'Nhà u ngắn',
-        words: ['foot', 'lookout', 'foot'],
+        words: ['foot', 'lookout', 'hood'],
         color: 'text-teal-700',
         borderColor: 'border-teal-300',
         bgLight: 'bg-teal-50'

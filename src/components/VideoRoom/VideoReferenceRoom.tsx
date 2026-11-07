@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ExternalLink, Play, Pause, RotateCcw, Volume2, Sparkles, CheckCircle, Search, Gauge, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ExternalLink, Play, Pause, RotateCcw, Volume2, Sparkles, CheckCircle, Search, Gauge } from 'lucide-react';
 import { soundService } from '../../services/speechService';
 
 interface VideoLesson {
@@ -25,177 +25,180 @@ interface VideoLesson {
   practiceWords: { word: string; ipa: string; meaningVi: string }[];
 }
 
+// Dữ liệu tĩnh đặt ngoài component: tham chiếu ổn định giữa các lần render
+const VIDEO_LESSONS: VideoLesson[] = [
+  {
+    id: 'lesson_i_vowels',
+    title: 'Khẩu Hình Cận Cảnh: Âm i Dài /iː/ vs i Ngắn /ɪ/',
+    teacher: 'Parroto Phonics & Cambridge US',
+    badge: 'Cặp âm số 1 cho bé',
+    category: 'i_vowels',
+    targetPhoneme: '/iː/ & /ɪ/',
+    targetWord: 'sheep vs ship',
+    wordIpa: '/ʃiːp/ vs /ʃɪp/',
+    sourceUrl: 'https://parroto.app/topics',
+    sourceName: 'Parroto Topics',
+    desc: 'Quay chậm cận cảnh chuyển động của 2 khóe miệng: /iː/ kéo căng dẹp môi tối đa ("Say cheese"), còn /ɪ/ thả lỏng hoàn toàn cơ mặt và dứt khoát.',
+    mouthStages: [
+      {
+        stageName: 'Bước 1: Chuẩn bị',
+        description: 'Thả lỏng hai môi, mắt nhìn thẳng vào gương',
+        lipShape: 'relaxed',
+        tongueHeight: 'mid',
+      },
+      {
+        stageName: 'Bước 2: Phát âm /iː/ (Cười tươi)',
+        description: 'Kéo căng 2 mép sang mang tai, nâng thân lưỡi lên cao, ngân dài "eeeeee" trong 1.5 giây',
+        lipShape: 'smile',
+        tongueHeight: 'high',
+      },
+      {
+        stageName: 'Bước 3: Chuyển sang /ɪ/ (Thả lỏng)',
+        description: 'Hạ nhẹ hàm, cơ mặt thả lỏng hoàn toàn, bật âm "ih" cụt lẹ trong 0.4 giây',
+        lipShape: 'relaxed',
+        tongueHeight: 'mid',
+      },
+    ],
+    keyTips: [
+      'Môi: Kéo căng sang 2 bên như đang cười thật tươi khi đọc /iː/',
+      'Thời gian: Âm /iː/ ngân dài gấp đôi âm /ɪ/',
+      'Cơ mặt: Thả lỏng toàn bộ cơ má và hàm khi phát âm /ɪ/',
+    ],
+    practiceWords: [
+      { word: 'sheep', ipa: '/ʃiːp/', meaningVi: 'Con cừu lông xù' },
+      { word: 'ship', ipa: '/ʃɪp/', meaningVi: 'Tàu thủy vượt sóng' },
+      { word: 'seat', ipa: '/siːt/', meaningVi: 'Ghế ngồi' },
+      { word: 'sit', ipa: '/sɪt/', meaningVi: 'Ngồi xuống' },
+      { word: 'eat', ipa: '/iːt/', meaningVi: 'Ăn đồ ăn' },
+      { word: 'it', ipa: '/ɪt/', meaningVi: 'Nó / Đồ vật' },
+    ],
+  },
+  {
+    id: 'lesson_stop_t',
+    title: 'Bí Kíp Ninja: Âm Chặn Hơi [t̚], [p̚], [k̚] Chuẩn Mỹ',
+    teacher: 'Cambridge Accent & US Phonics',
+    badge: 'Bí kíp nói tự nhiên',
+    category: 'stop_sounds',
+    targetPhoneme: '[t̚] & [p̚]',
+    targetWord: 'cat & stop',
+    wordIpa: '/kæt̚/ & /stɑːp̚/',
+    sourceUrl: 'https://dictionary.cambridge.org/dictionary/english/teacher',
+    sourceName: 'Cambridge Dictionary',
+    desc: 'Quay chậm cận cảnh động tác đưa đầu lưỡi chặn đứng nướu trên khi nói "cat", "hot dog", "football" mà không bật tiếng "tờ" to.',
+    mouthStages: [
+      {
+        stageName: 'Bước 1: Phát âm nguyên âm đầu',
+        description: 'Mở miệng phát âm "ca-" tự nhiên',
+        lipShape: 'relaxed',
+        tongueHeight: 'low',
+      },
+      {
+        stageName: 'Bước 2: Đưa đầu lưỡi lên nướu răng',
+        description: 'Đầu lưỡi dán chặt lên nướu răng cửa trên (Alveolar Ridge)',
+        lipShape: 'relaxed',
+        tongueHeight: 'high',
+        isHoldingBreath: true,
+      },
+      {
+        stageName: 'Bước 3: Chặn đứng luồng hơi (Hold)',
+        description: 'Khóa chặt luồng khí lại ngay trong miệng. Âm thanh ngắt đột ngột!',
+        lipShape: 'stop',
+        tongueHeight: 'high',
+        isHoldingBreath: true,
+      },
+    ],
+    keyTips: [
+      'Đưa đầu lưỡi dán chặt lên nướu răng cửa trên (Alveolar ridge)',
+      'Khóa luồng khí lại ngay trong miệng (Hold the breath)',
+      'Không nhả hơi ra ngoài, ngắt âm thanh dứt khoát',
+    ],
+    practiceWords: [
+      { word: 'cat', ipa: '/kæt̚/', meaningVi: 'Con mèo' },
+      { word: 'hot dog', ipa: '/ˈhɑːt̚ dɔːɡ/', meaningVi: 'Bánh mì kẹp xúc xích' },
+      { word: 'stop', ipa: '/stɑːp̚/', meaningVi: 'Dừng lại ngay' },
+      { word: 'football', ipa: '/ˈfʊt̚bɔːl/', meaningVi: 'Bóng đá' },
+    ],
+  },
+  {
+    id: 'lesson_final_sounds',
+    title: 'Đừng Nuốt Âm Cuối: /t/, /d/, /k/, /s/, /z/, /ʃ/',
+    teacher: 'Oxford & Cambridge English',
+    badge: 'Sửa lỗi nuốt âm',
+    category: 'final_sounds',
+    targetPhoneme: '/s/, /z/, /ʃ/, /d/',
+    targetWord: 'fish, bed, bus',
+    wordIpa: '/fɪʃ/, /bed/, /bʌs/',
+    sourceUrl: 'https://parroto.app/topics',
+    sourceName: 'Parroto Topics',
+    desc: 'Bài giảng khắc phục thói quen nuốt âm cuối của học sinh Việt Nam. Hướng dẫn bật âm xì /s/, rung /z/, suỵt /ʃ/ và nổ nhẹ /d/.',
+    mouthStages: [
+      {
+        stageName: 'Bước 1: Chu môi phía trước (/ʃ/)',
+        description: 'Chu tròn môi như đang thổi sáo, đẩy luồng gió êm "shhhh"',
+        lipShape: 'pucker',
+        tongueHeight: 'high',
+      },
+      {
+        stageName: 'Bước 2: Khép 2 hàm răng (/s/ & /z/)',
+        description: 'Răng khép gần nhau, thổi gió xì xì mát lạnh (/s/) hoặc rung cổ họng (/z/)',
+        lipShape: 'smile',
+        tongueHeight: 'mid',
+      },
+    ],
+    keyTips: [
+      'Âm cuối giúp người nghe phân biệt chính xác nghĩa của từ',
+      'Với âm /s/: Thổi gió xì xì mát lạnh qua kẽ răng',
+      'Với âm /d/: Cho cổ họng rung nhẹ ở cuối từ',
+    ],
+    practiceWords: [
+      { word: 'bed', ipa: '/bed/', meaningVi: 'Chiếc giường êm' },
+      { word: 'fish', ipa: '/fɪʃ/', meaningVi: 'Chú cá bơi' },
+      { word: 'bus', ipa: '/bʌs/', meaningVi: 'Xe buýt trường' },
+      { word: 'teeth', ipa: '/tiːθ/', meaningVi: 'Hàm răng trắng' },
+    ],
+  },
+  {
+    id: 'lesson_cambridge_teacher',
+    title: 'Tra Cứu Từ Điển Cambridge: Phân Tích Từ "Teacher"',
+    teacher: 'Cambridge Dictionary Official',
+    badge: 'Từ điển Quốc Tế',
+    category: 'cambridge',
+    targetPhoneme: '/ˈtiː.tʃɚ/',
+    targetWord: 'teacher',
+    wordIpa: '/ˈtiː.tʃɚ/',
+    sourceUrl: 'https://dictionary.cambridge.org/dictionary/english/teacher',
+    sourceName: 'Cambridge Dictionary: teacher',
+    desc: 'Hướng dẫn chuẩn Cambridge cho từ "teacher": âm đầu /t/, âm giữa /iː/ cười dẹt ngân dài, âm cuối /tʃɚ/ bật hơi chu môi.',
+    mouthStages: [
+      {
+        stageName: 'Âm tiết 1: "tea-" (/tiː/)',
+        description: 'Bật nhẹ /t/ rồi kéo căng mép cười tươi phát âm /iː/',
+        lipShape: 'smile',
+        tongueHeight: 'high',
+      },
+      {
+        stageName: 'Âm tiết 2: "-cher" (/tʃɚ/)',
+        description: 'Chu môi bật âm /tʃ/ và cuộn nhẹ đầu lưỡi cho âm /ɚ/ giọng Mỹ',
+        lipShape: 'pucker',
+        tongueHeight: 'mid',
+      },
+    ],
+    keyTips: [
+      'Trọng âm rơi vào âm tiết đầu tiên /ˈtiː/',
+      'Nhớ kéo dài âm /iː/ để từ nghe vang và chuẩn',
+      'Âm cuối /tʃɚ/ cuộn lưỡi nhẹ theo đặc trưng giọng Mỹ (rhotic accent)',
+    ],
+    practiceWords: [
+      { word: 'teacher', ipa: '/ˈtiː.tʃɚ/', meaningVi: 'Thầy cô giáo' },
+      { word: 'student', ipa: '/ˈstuː.dənt/', meaningVi: 'Học sinh' },
+      { word: 'doctor', ipa: '/ˈdɑːk.tɚ/', meaningVi: 'Bác sĩ' },
+      { word: 'water', ipa: '/ˈwɑː.t̬ɚ/', meaningVi: 'Nước uống' },
+    ],
+  },
+];
+
 export const VideoReferenceRoom: React.FC = () => {
-  const videoLessons: VideoLesson[] = [
-    {
-      id: 'lesson_i_vowels',
-      title: 'Khẩu Hình Cận Cảnh: Âm i Dài /iː/ vs i Ngắn /ɪ/',
-      teacher: 'Parroto Phonics & Cambridge US',
-      badge: 'Cặp âm số 1 cho bé',
-      category: 'i_vowels',
-      targetPhoneme: '/iː/ & /ɪ/',
-      targetWord: 'sheep vs ship',
-      wordIpa: '/ʃiːp/ vs /ʃɪp/',
-      sourceUrl: 'https://parroto.app/topics',
-      sourceName: 'Parroto Topics',
-      desc: 'Quay chậm cận cảnh chuyển động của 2 khóe miệng: /iː/ kéo căng dẹp môi tối đa ("Say cheese"), còn /ɪ/ thả lỏng hoàn toàn cơ mặt và dứt khoát.',
-      mouthStages: [
-        {
-          stageName: 'Bước 1: Chuẩn bị',
-          description: 'Thả lỏng hai môi, mắt nhìn thẳng vào gương',
-          lipShape: 'relaxed',
-          tongueHeight: 'mid',
-        },
-        {
-          stageName: 'Bước 2: Phát âm /iː/ (Cười tươi)',
-          description: 'Kéo căng 2 mép sang mang tai, nâng thân lưỡi lên cao, ngân dài "eeeeee" trong 1.5 giây',
-          lipShape: 'smile',
-          tongueHeight: 'high',
-        },
-        {
-          stageName: 'Bước 3: Chuyển sang /ɪ/ (Thả lỏng)',
-          description: 'Hạ nhẹ hàm, cơ mặt thả lỏng hoàn toàn, bật âm "ih" cụt lẹ trong 0.4 giây',
-          lipShape: 'relaxed',
-          tongueHeight: 'mid',
-        },
-      ],
-      keyTips: [
-        'Môi: Kéo căng sang 2 bên như đang cười thật tươi khi đọc /iː/',
-        'Thời gian: Âm /iː/ ngân dài gấp đôi âm /ɪ/',
-        'Cơ mặt: Thả lỏng toàn bộ cơ má và hàm khi phát âm /ɪ/',
-      ],
-      practiceWords: [
-        { word: 'sheep', ipa: '/ʃiːp/', meaningVi: 'Con cừu lông xù' },
-        { word: 'ship', ipa: '/ʃɪp/', meaningVi: 'Tàu thủy vượt sóng' },
-        { word: 'seat', ipa: '/siːt/', meaningVi: 'Ghế ngồi' },
-        { word: 'sit', ipa: '/sɪt/', meaningVi: 'Ngồi xuống' },
-        { word: 'eat', ipa: '/iːt/', meaningVi: 'Ăn đồ ăn' },
-        { word: 'it', ipa: '/ɪt/', meaningVi: 'Nó / Đồ vật' },
-      ],
-    },
-    {
-      id: 'lesson_stop_t',
-      title: 'Bí Kíp Ninja: Âm Chặn Hơi [t̚], [p̚], [k̚] Chuẩn Mỹ',
-      teacher: 'Cambridge Accent & US Phonics',
-      badge: 'Bí kíp nói tự nhiên',
-      category: 'stop_sounds',
-      targetPhoneme: '[t̚] & [p̚]',
-      targetWord: 'cat & stop',
-      wordIpa: '/kæt̚/ & /stɑːp̚/',
-      sourceUrl: 'https://dictionary.cambridge.org/dictionary/english/teacher',
-      sourceName: 'Cambridge Dictionary',
-      desc: 'Quay chậm cận cảnh động tác đưa đầu lưỡi chặn đứng nướu trên khi nói "cat", "hot dog", "football" mà không bật tiếng "tờ" to.',
-      mouthStages: [
-        {
-          stageName: 'Bước 1: Phát âm nguyên âm đầu',
-          description: 'Mở miệng phát âm "ca-" tự nhiên',
-          lipShape: 'relaxed',
-          tongueHeight: 'low',
-        },
-        {
-          stageName: 'Bước 2: Đưa đầu lưỡi lên nướu răng',
-          description: 'Đầu lưỡi dán chặt lên nướu răng cửa trên (Alveolar Ridge)',
-          lipShape: 'relaxed',
-          tongueHeight: 'high',
-          isHoldingBreath: true,
-        },
-        {
-          stageName: 'Bước 3: Chặn đứng luồng hơi (Hold)',
-          description: 'Khóa chặt luồng khí lại ngay trong miệng. Âm thanh ngắt đột ngột!',
-          lipShape: 'stop',
-          tongueHeight: 'high',
-          isHoldingBreath: true,
-        },
-      ],
-      keyTips: [
-        'Đưa đầu lưỡi dán chặt lên nướu răng cửa trên (Alveolar ridge)',
-        'Khóa luồng khí lại ngay trong miệng (Hold the breath)',
-        'Không nhả hơi ra ngoài, ngắt âm thanh dứt khoát',
-      ],
-      practiceWords: [
-        { word: 'cat', ipa: '/kæt̚/', meaningVi: 'Con mèo' },
-        { word: 'hot dog', ipa: '/ˈhɑːt̚ dɔːɡ/', meaningVi: 'Bánh mì kẹp xúc xích' },
-        { word: 'stop', ipa: '/stɑːp̚/', meaningVi: 'Dừng lại ngay' },
-        { word: 'football', ipa: '/ˈfʊt̚bɔːl/', meaningVi: 'Bóng đá' },
-      ],
-    },
-    {
-      id: 'lesson_final_sounds',
-      title: 'Đừng Nuốt Âm Cuối: /t/, /d/, /k/, /s/, /z/, /ʃ/',
-      teacher: 'Oxford & Cambridge English',
-      badge: 'Sửa lỗi nuốt âm',
-      category: 'final_sounds',
-      targetPhoneme: '/s/, /z/, /ʃ/, /d/',
-      targetWord: 'fish, bed, bus',
-      wordIpa: '/fɪʃ/, /bed/, /bʌs/',
-      sourceUrl: 'https://parroto.app/topics',
-      sourceName: 'Parroto Topics',
-      desc: 'Bài giảng khắc phục thói quen nuốt âm cuối của học sinh Việt Nam. Hướng dẫn bật âm xì /s/, rung /z/, suỵt /ʃ/ và nổ nhẹ /d/.',
-      mouthStages: [
-        {
-          stageName: 'Bước 1: Chu môi phía trước (/ʃ/)',
-          description: 'Chu tròn môi như đang thổi sáo, đẩy luồng gió êm "shhhh"',
-          lipShape: 'pucker',
-          tongueHeight: 'high',
-        },
-        {
-          stageName: 'Bước 2: Khép 2 hàm răng (/s/ & /z/)',
-          description: 'Răng khép gần nhau, thổi gió xì xì mát lạnh (/s/) hoặc rung cổ họng (/z/)',
-          lipShape: 'smile',
-          tongueHeight: 'mid',
-        },
-      ],
-      keyTips: [
-        'Âm cuối giúp người nghe phân biệt chính xác nghĩa của từ',
-        'Với âm /s/: Thổi gió xì xì mát lạnh qua kẽ răng',
-        'Với âm /d/: Cho cổ họng rung nhẹ ở cuối từ',
-      ],
-      practiceWords: [
-        { word: 'bed', ipa: '/bed/', meaningVi: 'Chiếc giường êm' },
-        { word: 'fish', ipa: '/fɪʃ/', meaningVi: 'Chú cá bơi' },
-        { word: 'bus', ipa: '/bʌs/', meaningVi: 'Xe buýt trường' },
-        { word: 'teeth', ipa: '/tiːθ/', meaningVi: 'Hàm răng trắng' },
-      ],
-    },
-    {
-      id: 'lesson_cambridge_teacher',
-      title: 'Tra Cứu Từ Điển Cambridge: Phân Tích Từ "Teacher"',
-      teacher: 'Cambridge Dictionary Official',
-      badge: 'Từ điển Quốc Tế',
-      category: 'cambridge',
-      targetPhoneme: '/ˈtiː.tʃɚ/',
-      targetWord: 'teacher',
-      wordIpa: '/ˈtiː.tʃɚ/',
-      sourceUrl: 'https://dictionary.cambridge.org/dictionary/english/teacher',
-      sourceName: 'Cambridge Dictionary: teacher',
-      desc: 'Hướng dẫn chuẩn Cambridge cho từ "teacher": âm đầu /t/, âm giữa /iː/ cười dẹt ngân dài, âm cuối /tʃɚ/ bật hơi chu môi.',
-      mouthStages: [
-        {
-          stageName: 'Âm tiết 1: "tea-" (/tiː/)',
-          description: 'Bật nhẹ /t/ rồi kéo căng mép cười tươi phát âm /iː/',
-          lipShape: 'smile',
-          tongueHeight: 'high',
-        },
-        {
-          stageName: 'Âm tiết 2: "-cher" (/tʃɚ/)',
-          description: 'Chu môi bật âm /tʃ/ và cuộn nhẹ đầu lưỡi cho âm /ɚ/ giọng Mỹ',
-          lipShape: 'pucker',
-          tongueHeight: 'mid',
-        },
-      ],
-      keyTips: [
-        'Trọng âm rơi vào âm tiết đầu tiên /ˈtiː/',
-        'Nhớ kéo dài âm /iː/ để từ nghe vang và chuẩn',
-        'Âm cuối /tʃɚ/ cuộn lưỡi nhẹ theo đặc trưng giọng Mỹ (rhotic accent)',
-      ],
-      practiceWords: [
-        { word: 'teacher', ipa: '/ˈtiː.tʃɚ/', meaningVi: 'Thầy cô giáo' },
-        { word: 'student', ipa: '/ˈstuː.dənt/', meaningVi: 'Học sinh' },
-        { word: 'doctor', ipa: '/ˈdɑːk.tɚ/', meaningVi: 'Bác sĩ' },
-        { word: 'water', ipa: '/ˈwɑː.t̬ɚ/', meaningVi: 'Nước uống' },
-      ],
-    },
-  ];
+  const videoLessons = VIDEO_LESSONS;
 
   const [activeLessonId, setActiveLessonId] = useState<string>(videoLessons[0].id);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -206,27 +209,27 @@ export const VideoReferenceRoom: React.FC = () => {
   const currentLesson = videoLessons.find((l) => l.id === activeLessonId) || videoLessons[0];
   const activeStage = currentLesson.mouthStages[currentStageIdx] || currentLesson.mouthStages[0];
 
-  // Play animation sequence when isPlaying is active
+  // Đọc từ mẫu một lần mỗi khi bắt đầu phát
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isPlaying) {
-      // Speak the target word with current speed
-      const speechRate = playbackSpeed === 0.5 ? 0.55 : playbackSpeed === 0.75 ? 0.75 : 0.95;
-      soundService.speakUS(currentLesson.targetWord.split(' ')[0], speechRate);
+    if (!isPlaying) return;
+    const speechRate = playbackSpeed === 0.5 ? 0.55 : playbackSpeed === 0.75 ? 0.75 : 0.95;
+    soundService.speakUS(currentLesson.targetWord.split(' ')[0], speechRate);
+  }, [isPlaying, currentLesson]);
 
-      const intervalMs = Math.round(1800 / playbackSpeed);
-      timer = setInterval(() => {
-        setCurrentStageIdx((prev) => {
-          if (prev >= currentLesson.mouthStages.length - 1) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, intervalMs);
-    }
-    return () => clearInterval(timer);
-  }, [isPlaying, playbackSpeed, currentLesson]);
+  // Chạy lần lượt từng bước khẩu hình, dừng ở bước cuối
+  useEffect(() => {
+    if (!isPlaying) return;
+    const intervalMs = Math.round(1800 / playbackSpeed);
+    const timer = setTimeout(() => {
+      if (currentStageIdx >= currentLesson.mouthStages.length - 1) {
+        setIsPlaying(false);
+        setCurrentStageIdx(0);
+      } else {
+        setCurrentStageIdx(currentStageIdx + 1);
+      }
+    }, intervalMs);
+    return () => clearTimeout(timer);
+  }, [isPlaying, playbackSpeed, currentLesson, currentStageIdx]);
 
   const handleTogglePlay = () => {
     if (!isPlaying) {
@@ -630,7 +633,7 @@ export const VideoReferenceRoom: React.FC = () => {
 
           <a
             href={`https://dictionary.cambridge.org/dictionary/english/${encodeURIComponent(
-              cambridgeWord || 'teacher'
+              cambridgeWord.trim().toLowerCase().replace(/\s+/g, '-') || 'teacher'
             )}`}
             target="_blank"
             rel="noopener noreferrer"

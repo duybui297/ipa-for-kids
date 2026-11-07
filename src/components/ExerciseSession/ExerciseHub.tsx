@@ -11,15 +11,11 @@ import { Exercise6Section } from './Exercise6Section';
 import { FullWorksheetSolutionSheet } from './FullWorksheetSolutionSheet';
 import { PRACTICE_EXAM_SETS, getPracticeSetById } from '../../data/exerciseSets';
 import { soundService } from '../../services/speechService';
-import { 
-  GraduationCap, 
-  Sparkles, 
+import { usePersistentState, isNumberRecord } from '../../hooks/usePersistentState';
+import {
+  GraduationCap,
   ChevronLeft,
   ChevronRight,
-  BookOpen,
-  Award,
-  Layers,
-  CheckCircle2,
   ListFilter
 } from 'lucide-react';
 
@@ -56,6 +52,25 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
   const mascot = MASCOTS[mascotId] || MASCOTS.chiikawa;
 
   const currentSet = getPracticeSetById(selectedSetId);
+
+  // Điểm sao cao nhất bé từng đạt ở từng bài của từng bộ đề.
+  // Chỉ cộng thêm phần sao vượt kỷ lục cũ, nên bấm "Kiểm tra" lặp lại
+  // hoặc đổi tab rồi làm lại không thể "cày" sao vô hạn.
+  const [bestStars, setBestStars] = usePersistentState<Record<string, number>>(
+    'ipa_exercise_best_stars_v1',
+    {},
+    isNumberRecord
+  );
+
+  const makeStarAwarder = (exerciseKey: string) => (stars: number, subKey?: string): number => {
+    const key = `set${currentSet.id}:${exerciseKey}${subKey ? `-${subKey}` : ''}`;
+    const delta = Math.max(0, stars - (bestStars[key] ?? 0));
+    if (delta > 0) {
+      setBestStars((prev) => ({ ...prev, [key]: Math.max(prev[key] ?? 0, stars) }));
+      onEarnStars(delta);
+    }
+    return delta;
+  };
 
   const handleSelectSet = (id: number) => {
     soundService.playPop();
@@ -177,7 +192,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
                 </h2>
               </div>
               <p className="text-xs text-indigo-700 font-medium">
-                Chủ đề: {currentSet.topic} • (Bộ {currentSet.id} / 15 bộ đề)
+                Chủ đề: {currentSet.topic} • (Bộ {currentSet.id} / {PRACTICE_EXAM_SETS.length} bộ đề)
               </p>
             </div>
           </div>
@@ -330,7 +345,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             key={currentSet.id} 
             questions={currentSet.exercise1} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b1')} 
           />
         )}
         {activeExercise === 'b2' && (
@@ -339,7 +354,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             words={currentSet.exercise2Words} 
             symbols={currentSet.exercise2Symbols} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b2')} 
           />
         )}
         {activeExercise === 'b3' && (
@@ -348,7 +363,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             data3a={currentSet.exercise3a} 
             data3b={currentSet.exercise3b} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b3')} 
           />
         )}
         {activeExercise === 'b4' && (
@@ -356,7 +371,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             key={currentSet.id} 
             questions={currentSet.exercise4} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b4')} 
           />
         )}
         {activeExercise === 'b5' && (
@@ -364,7 +379,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             key={currentSet.id} 
             questions={currentSet.exercise5} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b5')} 
           />
         )}
         {activeExercise === 'b6' && (
@@ -372,7 +387,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars }) => {
             key={currentSet.id} 
             questions={currentSet.exercise6} 
             examSetTitle={currentSet.title}
-            onEarnStars={onEarnStars} 
+            onEarnStars={makeStarAwarder('b6')} 
           />
         )}
         {activeExercise === 'solutions' && (

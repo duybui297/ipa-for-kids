@@ -1,15 +1,11 @@
-import {
-  PracticeExamSet,
+import type {
   Exercise1Question,
   Exercise2WordItem,
   Exercise2SymbolItem,
   Exercise3Set,
-  Exercise3House,
   Exercise4Question,
   Exercise5Question,
   Exercise6Question,
-  PRACTICE_EXAM_SETS,
-  getPracticeSetById
 } from './exerciseSets';
 import { SET_1 } from './exerciseSets/set1';
 

@@ -4,26 +4,29 @@ import { triggerGameVictoryConfetti, triggerStarMilestoneConfetti } from '../../
 import { FINAL_SOUND_QUESTIONS } from '../../data/ipaData';
 import { MascotId } from '../../types/ipa';
 import { MascotAvatar } from '../Mascot/MascotAvatar';
-import { Volume2, Search, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Volume2, ArrowRight, RotateCcw } from 'lucide-react';
 import { soundService } from '../../services/speechService';
 import { calculateGameScore, evaluateFinalSound } from '../../utils/gameRules';
 
 interface FinalSoundDetectiveProps {
   mascotId: MascotId;
   onEarnStars: (stars: number) => void;
-  onGameComplete?: () => void;
+  /** Gọi mỗi khi bé chọn đúng một âm cuối (dùng để mở khóa huy hiệu). */
+  onCorrectAnswer?: () => void;
 }
 
 export const FinalSoundDetective: React.FC<FinalSoundDetectiveProps> = ({
   mascotId,
   onEarnStars,
-  onGameComplete,
+  onCorrectAnswer,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
 
   const question = FINAL_SOUND_QUESTIONS[currentIndex];
 
@@ -45,6 +48,8 @@ export const FinalSoundDetective: React.FC<FinalSoundDetectiveProps> = ({
     if (isCorrect) {
       soundService.playChime();
       onEarnStars(scoreResult.starsEarned);
+      onCorrectAnswer?.();
+      setCorrectCount((prev) => prev + 1);
 
       const isFinalQuestion = currentIndex === FINAL_SOUND_QUESTIONS.length - 1;
       if (isFinalQuestion) {
@@ -71,11 +76,43 @@ export const FinalSoundDetective: React.FC<FinalSoundDetectiveProps> = ({
       setSelectedOption(null);
       setIsAnswered(false);
     } else {
-      if (onGameComplete) onGameComplete();
+      setIsFinished(true);
+      soundService.playChime();
     }
   };
 
-  const isCorrect = selectedOption && evaluateFinalSound(selectedOption, question.correctOption);
+  const handleRestart = () => {
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setScore(0);
+    setStreak(0);
+    setCorrectCount(0);
+    setIsFinished(false);
+    soundService.playPop();
+  };
+
+  const isCorrect = selectedOption !== null && evaluateFinalSound(selectedOption, question.correctOption);
+
+  if (isFinished) {
+    const total = FINAL_SOUND_QUESTIONS.length;
+    return (
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border-2 border-purple-200 flex flex-col items-center gap-4 text-center">
+        <MascotAvatar mascotId={mascotId} size="lg" mood={correctCount === total ? 'cheering' : 'happy'} />
+        <h2 className="text-2xl font-black text-slate-800">🏆 Hoàn thành hồ sơ phá án!</h2>
+        <p className="text-sm text-slate-600">
+          Bé đã bắt đúng <strong className="text-purple-700">{correctCount}/{total}</strong> âm cuối và nhận{' '}
+          <strong className="text-amber-600">{score} sao</strong>.
+        </p>
+        <button
+          onClick={handleRestart}
+          className="px-6 py-3 bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md transition-transform active:scale-95 flex items-center gap-2 text-sm cursor-pointer"
+        >
+          <RotateCcw className="w-4 h-4" /> Chơi lại từ đầu
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-7 shadow-xl border-2 border-purple-200 flex flex-col gap-5">

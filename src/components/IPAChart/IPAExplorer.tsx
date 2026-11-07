@@ -3,7 +3,7 @@ import { PHONEMES_DATA } from '../../data/ipaData';
 import { CONFUSING_PAIRS_DATA, ConfusingPair } from '../../data/confusingPairsData';
 import { Phoneme, VowelLengthTag } from '../../types/ipa';
 import { MouthVisualizer } from '../MouthLab/MouthVisualizer';
-import { Volume2, Sparkles, ArrowRight, ArrowLeftRight, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { Volume2, Sparkles, ArrowLeftRight } from 'lucide-react';
 import { soundService } from '../../services/speechService';
 
 interface IPAExplorerProps {

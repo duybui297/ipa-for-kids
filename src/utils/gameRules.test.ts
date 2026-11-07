@@ -6,7 +6,10 @@ import {
   evaluateFinalSound,
   evaluateMinimalPairChoice,
   checkUnlockedBadges,
+  BADGE_RULES,
+  EMPTY_PROGRESS,
 } from './gameRules';
+import { STICKER_BADGES } from '../data/ipaData';
 
 test('calculateGameScore: awards 10 stars for normal correct answer', () => {
   const result = calculateGameScore(true, 0, 0);
@@ -47,13 +50,27 @@ test('evaluateMinimalPairChoice: verifies selection', () => {
 });
 
 test('checkUnlockedBadges: grants badges according to thresholds', () => {
-  const badgesEmpty = checkUnlockedBadges(10, 0, 0, 0);
-  assert.deepEqual(badgesEmpty, []);
+  assert.deepEqual(checkUnlockedBadges({ ...EMPTY_PROGRESS, stars: 10 }), []);
 
-  const badgesEarned = checkUnlockedBadges(60, 5, 4, 2);
-  assert.ok(badgesEarned.includes('badge_star'));
-  assert.ok(badgesEarned.includes('badge_i_master'));
-  assert.ok(badgesEarned.includes('badge_final_detective'));
-  assert.ok(badgesEarned.includes('badge_omnom_candy'));
-  assert.ok(badgesEarned.includes('badge_kpop_mic'));
+  const earned = checkUnlockedBadges({
+    stars: 60,
+    solvedPairs: 10,
+    solvedFinalSounds: 4,
+    stopSoundsPracticed: 4,
+    voiceRecordCount: 5,
+  });
+  assert.deepEqual(earned.sort(), [
+    'badge_final_detective',
+    'badge_i_master',
+    'badge_kpop_mic',
+    'badge_ninja_stop',
+    'badge_omnom_candy',
+    'badge_star',
+  ]);
+});
+
+test('checkUnlockedBadges: every rule maps to a badge shown in the collection', () => {
+  const shownIds = STICKER_BADGES.map((b) => b.id).sort();
+  const ruleIds = BADGE_RULES.map((r) => r.id).sort();
+  assert.deepEqual(ruleIds, shownIds);
 });

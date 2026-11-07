@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { PHONEMES_DATA } from '../../data/ipaData';
 import { MascotId } from '../../types/ipa';
 import { MascotAvatar } from '../Mascot/MascotAvatar';
 import { Mic, Square, Play, Volume2, Sparkles, Star, Award, RotateCcw } from 'lucide-react';
@@ -8,88 +7,124 @@ import { soundService } from '../../services/speechService';
 
 interface VoiceStudioProps {
   mascotId: MascotId;
-  onEarnStars: (stars: number) => void;
-  onRecordCompleted: () => void;
+  /** Ghi nhận một lượt thu âm; trả về số sao được thưởng (chỉ lượt đầu của mỗi từ). */
+  onRecordCompleted: (word: string) => number;
 }
+
+// Danh sách cố định, đặt ngoài component để không tạo lại mỗi lần render
+const PRACTICE_WORDS = [
+  { word: 'sheep', ipa: '/ʃiːp/', sound: 'i dài (/iː/)', tip: 'Cười tươi, kéo dài!', emoji: '🐑' },
+  { word: 'ship', ipa: '/ʃɪp/', sound: 'i ngắn (/ɪ/)', tip: 'Thả lỏng, đọc nhanh dứt khoát!', emoji: '🚢' },
+  { word: 'cat', ipa: '/kæt̚/', sound: 'Âm chặn hơi [t̚]', tip: 'Đầu lưỡi dán chặt nướu trên!', emoji: '🐱' },
+  { word: 'bed', ipa: '/bed/', sound: 'Âm cuối /d/', tip: 'Rung nhẹ thanh quản!', emoji: '🛏️' },
+  { word: 'fish', ipa: '/fɪʃ/', sound: 'Âm chu môi /ʃ/', tip: 'Chu môi như bảo suỵt khẽ!', emoji: '🐟' },
+  { word: 'cup', ipa: '/kʌp̚/', sound: 'Âm chặn môi [p̚]', tip: 'Mím chặt môi lại!', emoji: '🥤' },
+  { word: 'teeth', ipa: '/tiːθ/', sound: 'Âm thè lưỡi /θ/', tip: 'Đặt đầu lưỡi giữa 2 răng!', emoji: '🦷' },
+];
 
 export const VoiceStudio: React.FC<VoiceStudioProps> = ({
   mascotId,
-  onEarnStars,
   onRecordCompleted,
 }) => {
-  // Selectable practice words from key phonemes
-  const practiceWords = [
-    { word: 'sheep', ipa: '/ʃiːp/', sound: 'i dài (/iː/)', tip: 'Cười tươi, kéo dài!', emoji: '🐑' },
-    { word: 'ship', ipa: '/ʃɪp/', sound: 'i ngắn (/ɪ/)', tip: 'Thả lỏng, đọc nhanh dứt khoát!', emoji: '🚢' },
-    { word: 'cat', ipa: '/kæt̚/', sound: 'Âm chặn hơi [t̚]', tip: 'Đầu lưỡi dán chặt nướu trên!', emoji: '🐱' },
-    { word: 'bed', ipa: '/bed/', sound: 'Âm cuối /d/', tip: 'Rung nhẹ thanh quản!', emoji: '🛏️' },
-    { word: 'fish', ipa: '/fɪʃ/', sound: 'Âm chu môi /ʃ/', tip: 'Chu môi như bảo suỵt khẽ!', emoji: '🐟' },
-    { word: 'cup', ipa: '/kʌp̚/', sound: 'Âm chặn môi [p̚]', tip: 'Mím chặt môi lại!', emoji: '🥤' },
-    { word: 'teeth', ipa: '/tiːθ/', sound: 'Âm thè lưỡi /θ/', tip: 'Đặt đầu lưỡi giữa 2 răng!', emoji: '🦷' },
-  ];
+  const practiceWords = PRACTICE_WORDS;
 
   const [selectedWordIdx, setSelectedWordIdx] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [hasEvaluated, setHasEvaluated] = useState(false);
+  const [starsAwarded, setStarsAwarded] = useState(0);
   const [micError, setMicError] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const currentWord = practiceWords[selectedWordIdx];
+
+  const stopStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  // Thu hồi blob URL cũ để không rò rỉ bộ nhớ
+  useEffect(() => {
+    return () => {
+      if (audioBlobUrl) URL.revokeObjectURL(audioBlobUrl);
+    };
+  }, [audioBlobUrl]);
+
+  // Rời trang khi đang thu: dừng recorder và tắt micro
+  useEffect(() => {
+    return () => {
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.onstop = null;
+        recorder.stop();
+      }
+      stopStream();
+    };
+  }, []);
 
   const playUsModel = (slow: boolean = false) => {
     soundService.speakUS(currentWord.word, slow ? 0.6 : 0.95);
   };
 
   const startRecording = async () => {
+    if (isRecording) return;
     setMicError(null);
     setAudioBlobUrl(null);
     setHasEvaluated(false);
 
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setMicError('Trình duyệt này chưa hỗ trợ ghi âm. Bé hãy thử Chrome, Edge hoặc Safari mới nhé!');
+      return;
+    }
+
+    let stream: MediaStream;
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Trình duyệt chưa hỗ trợ ghi âm trực tiếp.');
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      console.error(err);
+      setMicError('Không thể mở micro. Bé nhờ bố mẹ cấp quyền micro cho trình duyệt rồi thử lại nhé!');
+      return;
+    }
+
+    streamRef.current = stream;
+    const recordedWord = currentWord.word;
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    audioChunksRef.current = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunksRef.current.push(event.data);
       }
+    };
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioBlobUrl(url);
-        setHasEvaluated(true);
-        soundService.playChime();
-        onEarnStars(20);
-        onRecordCompleted();
+    mediaRecorder.onstop = () => {
+      stopStream();
+      // Dùng đúng định dạng trình duyệt ghi ra (Safari: audio/mp4, Chrome: audio/webm)
+      const audioBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
+      if (audioBlob.size === 0) {
+        setMicError('Chưa thu được âm thanh. Bé thử đọc to hơn một chút nhé!');
+        return;
+      }
+      setAudioBlobUrl(URL.createObjectURL(audioBlob));
+      setHasEvaluated(true);
+      soundService.playChime();
+      const awarded = onRecordCompleted(recordedWord);
+      setStarsAwarded(awarded);
+      if (awarded > 0) {
         confetti({
           particleCount: 50,
           spread: 80,
           origin: { y: 0.6 },
         });
+      }
+    };
 
-        // Stop stream tracks
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      soundService.playPop();
-    } catch (err) {
-      console.error(err);
-      setMicError('Không thể mở micro. Bé hãy kiểm tra cấp quyền micro trên trình duyệt nhé!');
-      // Graceful fallback for preview testing without real mic hardware
-      simulateRecording();
-    }
+    mediaRecorder.start();
+    setIsRecording(true);
+    soundService.playPop();
   };
 
   const stopRecording = () => {
@@ -99,31 +134,10 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
     }
   };
 
-  // Fallback simulation in sandbox environments without microphone access
-  const simulateRecording = () => {
-    setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      setHasEvaluated(true);
-      soundService.playChime();
-      onEarnStars(20);
-      onRecordCompleted();
-      confetti({
-        particleCount: 50,
-        spread: 80,
-        origin: { y: 0.6 },
-      });
-    }, 2000);
-  };
-
   const playKidAudio = () => {
-    if (audioBlobUrl) {
-      const audio = new Audio(audioBlobUrl);
-      audio.play();
-    } else {
-      // Re-speak as playback representation
-      soundService.speakUS(currentWord.word, 1.1, 1.3);
-    }
+    if (!audioBlobUrl) return;
+    const audio = new Audio(audioBlobUrl);
+    audio.play().catch((err) => console.error(err));
   };
 
   return (
@@ -232,10 +246,12 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
                 <Star className="w-5 h-5 fill-amber-400" />
                 <Star className="w-5 h-5 fill-amber-400" />
                 <Star className="w-5 h-5 fill-amber-400" />
-                <span className="text-xs font-bold text-emerald-800 ml-1">+20 sao!</span>
+                <span className="text-xs font-bold text-emerald-800 ml-1">
+                  {starsAwarded > 0 ? `+${starsAwarded} sao!` : 'Đã nhận sao cho từ này'}
+                </span>
               </div>
               <p className="text-sm font-bold text-emerald-900">
-                Tuyệt vời! Bé phát âm rất tròn vành rõ chữ!
+                Tuyệt vời! Bé hãy nghe lại giọng mình và so với mẫu US nhé!
               </p>
             </div>
           </div>
@@ -270,6 +286,7 @@ export const VoiceStudio: React.FC<VoiceStudioProps> = ({
             return (
               <button
                 key={item.word}
+                disabled={isRecording}
                 onClick={() => {
                   setSelectedWordIdx(idx);
                   setHasEvaluated(false);

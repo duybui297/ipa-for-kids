@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { STICKER_BADGES } from '../../data/ipaData';
-import { Award, Star, X, CheckCircle, Lock } from 'lucide-react';
+import { X, CheckCircle, Lock } from 'lucide-react';
 
 interface BadgeCollectionModalProps {
   isOpen: boolean;
@@ -15,14 +15,33 @@ export const BadgeCollectionModal: React.FC<BadgeCollectionModalProps> = ({
   unlockedBadgeIds,
   totalStars,
 }) => {
+  // Đóng bằng phím Esc
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-pink-200 relative animate-scale-up">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="badge-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-pink-200 relative animate-scale-up">
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Đóng kho huy hiệu"
           className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
@@ -34,7 +53,7 @@ export const BadgeCollectionModal: React.FC<BadgeCollectionModalProps> = ({
             🏆
           </div>
           <div>
-            <h3 className="text-xl font-bold text-slate-800">Kho Huy Hiệu Của Bé</h3>
+            <h3 id="badge-modal-title" className="text-xl font-bold text-slate-800">Kho Huy Hiệu Của Bé</h3>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
               <span>Đã sưu tập:</span>
               <span className="font-bold text-pink-600">

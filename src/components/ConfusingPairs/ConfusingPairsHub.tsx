@@ -3,18 +3,20 @@ import confetti from 'canvas-confetti';
 import { CONFUSING_PAIRS_DATA, ConfusingPair, MinimalPairItem } from '../../data/confusingPairsData';
 import { MascotId } from '../../types/ipa';
 import { MascotAvatar } from '../Mascot/MascotAvatar';
-import { Volume2, Sparkles, ArrowLeftRight, CheckCircle2, RotateCcw, AlertTriangle, Play, HelpCircle } from 'lucide-react';
+import { Volume2, Sparkles, ArrowLeftRight, CheckCircle2, RotateCcw, HelpCircle } from 'lucide-react';
 import { soundService } from '../../services/speechService';
-import { calculateGameScore } from '../../utils/gameRules';
 
 interface ConfusingPairsHubProps {
   mascotId: MascotId;
   onEarnStars: (stars: number) => void;
+  /** Gọi mỗi khi bé đoán đúng một câu đố (dùng để mở khóa huy hiệu). */
+  onCorrectAnswer?: () => void;
 }
 
 export const ConfusingPairsHub: React.FC<ConfusingPairsHubProps> = ({
   mascotId,
   onEarnStars,
+  onCorrectAnswer,
 }) => {
   const [selectedPairId, setSelectedPairId] = useState<string>(CONFUSING_PAIRS_DATA[0].id);
   const [activeGroupFilter, setActiveGroupFilter] = useState<'all' | 'vowels' | 'voiced_voiceless' | 'fricatives_affricates'>('all');
@@ -61,6 +63,7 @@ export const ConfusingPairsHub: React.FC<ConfusingPairsHubProps> = ({
     if (isCorrect) {
       soundService.playOmNomChomp();
       onEarnStars(10);
+      onCorrectAnswer?.();
       setQuizScore((prev) => prev + 10);
       confetti({
         particleCount: 40,
@@ -101,14 +104,22 @@ export const ConfusingPairsHub: React.FC<ConfusingPairsHubProps> = ({
         {/* Group Filter Tabs */}
         <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
           {[
-            { id: 'all', label: 'Tất cả 11 Cặp Âm', icon: '📚' },
+            { id: 'all', label: `Tất cả ${CONFUSING_PAIRS_DATA.length} Cặp Âm`, icon: '📚' },
             { id: 'vowels', label: 'Cặp Nguyên Âm (i, u, æ, ɑː)', icon: '👄' },
             { id: 'voiced_voiceless', label: 'Vô Thanh vs Hữu Thanh (p/b, t/d, k/g, s/z)', icon: '⚡' },
             { id: 'fricatives_affricates', label: 'Chu Môi & Thè Lưỡi (sh/ch, th/s, f/v)', icon: '🎯' },
           ].map((grp) => (
             <button
               key={grp.id}
-              onClick={() => setActiveGroupFilter(grp.id as unknown as typeof activeGroupFilter)}
+              onClick={() => {
+                const groupId = grp.id as typeof activeGroupFilter;
+                setActiveGroupFilter(groupId);
+                const firstInGroup = CONFUSING_PAIRS_DATA.find((p) => groupId === 'all' || p.group === groupId);
+                if (firstInGroup && groupId !== 'all' && currentPair.group !== groupId) {
+                  setSelectedPairId(firstInGroup.id);
+                  setQuizWord(null);
+                }
+              }}
               className={`px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeGroupFilter === grp.id
                   ? 'bg-pink-600 text-white shadow-md shadow-pink-200 scale-102'

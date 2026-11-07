@@ -1,6 +1,6 @@
-import { Mascot } from '../types/ipa';
+import { Mascot, MascotId } from '../types/ipa';
 
-export const MASCOTS: Record<string, Mascot> = {
+export const MASCOTS: Record<MascotId, Mascot> = {
   chiikawa: {
     id: 'chiikawa',
     name: 'Chiikawa',

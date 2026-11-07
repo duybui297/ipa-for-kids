@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { MascotId } from './types/ipa';
 import { MASCOTS } from './data/characters';
 import { MascotAvatar } from './components/Mascot/MascotAvatar';
 import { MascotSelector } from './components/Navigation/MascotSelector';
 import { IPAExplorer } from './components/IPAChart/IPAExplorer';
-import { CandyPairsGame } from './components/Games/CandyPairsGame';
 import { ConfusingPairsHub } from './components/ConfusingPairs/ConfusingPairsHub';
 import { FinalSoundDetective } from './components/Games/FinalSoundDetective';
 import { StopSoundNinja } from './components/Games/StopSoundNinja';
@@ -14,87 +13,152 @@ import { ExerciseHub } from './components/ExerciseSession/ExerciseHub';
 import { BadgeCollectionModal } from './components/Reward/BadgeCollectionModal';
 import { soundService } from './services/speechService';
 import { checkUnlockedBadges } from './utils/gameRules';
-import { 
-  Sparkles, 
-  Award, 
-  BookOpen, 
-  Candy, 
-  Search, 
-  Flame, 
-  Mic, 
-  Video, 
-  Volume2, 
-  Star, 
-  HeartHandshake,
-  GraduationCap
-} from 'lucide-react';
+import { usePersistentState } from './hooks/usePersistentState';
+import { Award, BookOpen, Candy, Search, Flame, Mic, Video, GraduationCap } from 'lucide-react';
 
 import { triggerStarMilestoneConfetti, triggerBadgeUnlockedConfetti } from './utils/confetti';
 
 const STAR_MILESTONES = [50, 75, 100, 150, 200, 250, 300, 400, 500];
+const STARTING_STARS = 30;
+const STOP_WORD_STARS = 15;
+const FIRST_RECORDING_STARS = 20;
+
+type TabId = 'chart' | 'pairs' | 'exercise' | 'detective' | 'ninja' | 'studio' | 'videos';
+
+interface AppProgress {
+  stars: number;
+  solvedPairs: number;
+  solvedFinalSounds: number;
+  voiceRecordCount: number;
+  practicedStopWordIds: string[];
+  recordedWords: string[];
+}
+
+const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+function isAppProgress(v: unknown): v is AppProgress {
+  if (typeof v !== 'object' || v === null) return false;
+  const p = v as Record<string, unknown>;
+  return (
+    isCount(p.stars) &&
+    isCount(p.solvedPairs) &&
+    isCount(p.solvedFinalSounds) &&
+    isCount(p.voiceRecordCount) &&
+    isStringArray(p.practicedStopWordIds) &&
+    isStringArray(p.recordedWords)
+  );
+}
+
+function isMascotId(v: unknown): v is MascotId {
+  return typeof v === 'string' && Object.prototype.hasOwnProperty.call(MASCOTS, v);
+}
+
+/** Tiến độ mặc định; giữ lại số sao từ phiên bản cũ (key 'ipa_stars') nếu có. */
+function createInitialProgress(): AppProgress {
+  let stars = STARTING_STARS;
+  try {
+    const legacy = Number.parseInt(window.localStorage.getItem('ipa_stars') ?? '', 10);
+    if (Number.isFinite(legacy) && legacy >= 0) stars = legacy;
+  } catch {
+    // ignore
+  }
+  return { stars, solvedPairs: 0, solvedFinalSounds: 0, voiceRecordCount: 0, practicedStopWordIds: [], recordedWords: [] };
+}
 
 export default function App() {
-  const [activeMascot, setActiveMascot] = useState<MascotId>('chiikawa');
-  const [activeTab, setActiveTab] = useState<'chart' | 'pairs' | 'exercise' | 'detective' | 'ninja' | 'studio' | 'videos'>('chart');
-  const [stars, setStars] = useState<number>(30);
-  const [solvedPairsCount, setSolvedPairsCount] = useState<number>(0);
-  const [solvedFinalSoundsCount, setSolvedFinalSoundsCount] = useState<number>(0);
-  const [recordCount, setRecordCount] = useState<number>(0);
-  const [unlockedBadges, setUnlockedBadges] = useState<string[]>(['badge_star']);
+  // Bản cũ lưu mascot dạng chuỗi thô; JSON.parse thất bại sẽ rơi về fallback bên dưới,
+  // nên giá trị cũ vẫn được dùng lại.
+  const [activeMascot, setActiveMascot] = usePersistentState<MascotId>(
+    'ipa_mascot',
+    () => {
+      try {
+        const raw = window.localStorage.getItem('ipa_mascot');
+        if (isMascotId(raw)) return raw;
+      } catch {
+        // ignore
+      }
+      return 'chiikawa';
+    },
+    isMascotId
+  );
+  const [progress, setProgress] = usePersistentState<AppProgress>('ipa_progress_v1', createInitialProgress, isAppProgress);
+  const [activeTab, setActiveTab] = useState<TabId>('chart');
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
   const [showMascotSelector, setShowMascotSelector] = useState(false);
   const [milestoneCelebration, setMilestoneCelebration] = useState<{ message: string; stars: number } | null>(null);
 
-  // Load saved progress
-  useEffect(() => {
-    try {
-      const savedStars = localStorage.getItem('ipa_stars');
-      if (savedStars) setStars(parseInt(savedStars, 10));
-      const savedMascot = localStorage.getItem('ipa_mascot') as MascotId;
-      if (savedMascot && MASCOTS[savedMascot]) setActiveMascot(savedMascot);
-    } catch {
-      // Local storage fallback
-    }
-  }, []);
+  const stars = progress.stars;
 
-  // Update badges whenever metrics change
+  const unlockedBadges = useMemo(
+    () =>
+      checkUnlockedBadges({
+        stars: progress.stars,
+        solvedPairs: progress.solvedPairs,
+        solvedFinalSounds: progress.solvedFinalSounds,
+        stopSoundsPracticed: progress.practicedStopWordIds.length,
+        voiceRecordCount: progress.voiceRecordCount,
+      }),
+    [progress]
+  );
+
+  // Ăn mừng khi vượt mốc sao (side-effect nằm trong effect, không nằm trong state updater)
+  const prevStarsRef = useRef(stars);
   useEffect(() => {
-    const badges = checkUnlockedBadges(stars, solvedPairsCount, solvedFinalSoundsCount, recordCount);
-    if (badges.length > 0) {
-      setUnlockedBadges((prev) => {
-        const newlyUnlocked = badges.filter((b) => !prev.includes(b));
-        if (newlyUnlocked.length > 0) {
-          triggerBadgeUnlockedConfetti();
-        }
-        return Array.from(new Set([...prev, ...badges]));
-      });
+    const prev = prevStarsRef.current;
+    prevStarsRef.current = stars;
+    const crossed = [...STAR_MILESTONES].reverse().find((m) => prev < m && stars >= m);
+    if (crossed) {
+      triggerStarMilestoneConfetti(stars);
+      setMilestoneCelebration({ message: `Bé xuất sắc vượt mốc ${crossed} Sao Thưởng!`, stars: crossed });
     }
-    try {
-      localStorage.setItem('ipa_stars', stars.toString());
-      localStorage.setItem('ipa_mascot', activeMascot);
-    } catch {
-      // ignore
-    }
-  }, [stars, solvedPairsCount, solvedFinalSoundsCount, recordCount, activeMascot]);
+  }, [stars]);
+
+  useEffect(() => {
+    if (!milestoneCelebration) return;
+    const timer = setTimeout(() => setMilestoneCelebration(null), 4500);
+    return () => clearTimeout(timer);
+  }, [milestoneCelebration]);
+
+  // Ăn mừng khi mở khóa huy hiệu mới (không chạy lúc vừa tải trang)
+  const prevBadgesRef = useRef(unlockedBadges);
+  useEffect(() => {
+    const isNew = unlockedBadges.some((b) => !prevBadgesRef.current.includes(b));
+    prevBadgesRef.current = unlockedBadges;
+    if (isNew) triggerBadgeUnlockedConfetti();
+  }, [unlockedBadges]);
 
   const handleEarnStars = (amount: number) => {
-    setStars((prev) => {
-      const next = prev + amount;
-      // Check if crossed milestone
-      const crossedMilestone = STAR_MILESTONES.find((m) => prev < m && next >= m);
-      if (crossedMilestone) {
-        triggerStarMilestoneConfetti(next);
-        setMilestoneCelebration({
-          message: `Bé xuất sắc vượt mốc ${crossedMilestone} Sao Thưởng!`,
-          stars: crossedMilestone
-        });
-        setTimeout(() => setMilestoneCelebration(null), 4500);
-      }
-      return next;
-    });
+    if (amount <= 0) return;
+    setProgress((prev) => ({ ...prev, stars: prev.stars + amount }));
   };
 
-  const navTabs = [
+  const handlePracticeStopWord = (wordId: string) => {
+    if (progress.practicedStopWordIds.includes(wordId)) return false;
+    setProgress((prev) =>
+      prev.practicedStopWordIds.includes(wordId)
+        ? prev
+        : { ...prev, stars: prev.stars + STOP_WORD_STARS, practicedStopWordIds: [...prev.practicedStopWordIds, wordId] }
+    );
+    return true;
+  };
+
+  /** Lượt thu âm đầu tiên của mỗi từ được thưởng sao; các lượt sau chỉ tính vào huy hiệu. */
+  const handleRecordCompleted = (word: string): number => {
+    const isFirstTime = !progress.recordedWords.includes(word);
+    setProgress((prev) => {
+      const first = !prev.recordedWords.includes(word);
+      return {
+        ...prev,
+        voiceRecordCount: prev.voiceRecordCount + 1,
+        stars: prev.stars + (first ? FIRST_RECORDING_STARS : 0),
+        recordedWords: first ? [...prev.recordedWords, word] : prev.recordedWords,
+      };
+    });
+    return isFirstTime ? FIRST_RECORDING_STARS : 0;
+  };
+
+  const navTabs: { id: TabId; label: string; icon: typeof BookOpen; color: string; activeBg: string }[] = [
     { id: 'chart', label: 'Bảng 44 Âm IPA', icon: BookOpen, color: 'text-pink-600', activeBg: 'bg-pink-600' },
     { id: 'pairs', label: 'Phân Biệt Cặp Âm & Từ Dễ Nhầm', icon: Candy, color: 'text-amber-600', activeBg: 'bg-amber-500' },
     { id: 'exercise', label: '📝 Phòng Bài Tập (Bài 1 - 6)', icon: GraduationCap, color: 'text-rose-600', activeBg: 'bg-rose-600' },
@@ -114,7 +178,8 @@ export default function App() {
           {/* Logo & Kid Level */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowMascotSelector(!showMascotSelector)}
+              onClick={() => setShowMascotSelector((v) => !v)}
+              aria-expanded={showMascotSelector}
               className="relative transition-transform hover:scale-105 cursor-pointer focus:outline-hidden"
               title="Đổi bạn đồng hành"
               aria-label="Đổi bạn hoạt hình đồng hành"
@@ -137,7 +202,7 @@ export default function App() {
               <p className="text-xs text-slate-500 flex items-center gap-1">
                 Bạn đồng hành: <span className="font-bold text-slate-700">{currentMascot.name}</span>
                 <button
-                  onClick={() => setShowMascotSelector(!showMascotSelector)}
+                  onClick={() => setShowMascotSelector((v) => !v)}
                   className="text-pink-600 font-bold hover:underline ml-1 cursor-pointer"
                 >
                   (Đổi)
@@ -188,8 +253,9 @@ export default function App() {
               return (
                 <button
                   key={tab.id}
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => {
-                    setActiveTab(tab.id as unknown as typeof activeTab);
+                    setActiveTab(tab.id);
                     soundService.playPop();
                   }}
                   className={`px-3.5 py-2 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
@@ -217,6 +283,7 @@ export default function App() {
             </div>
             <button
               onClick={() => setMilestoneCelebration(null)}
+              aria-label="Đóng thông báo"
               className="ml-2 hover:bg-white/20 rounded-full p-1 text-white text-xs font-bold cursor-pointer"
             >
               ✕
@@ -231,7 +298,11 @@ export default function App() {
           <IPAExplorer onNavigateToPairs={() => setActiveTab('pairs')} />
         )}
         {activeTab === 'pairs' && (
-          <ConfusingPairsHub mascotId={activeMascot} onEarnStars={handleEarnStars} />
+          <ConfusingPairsHub
+            mascotId={activeMascot}
+            onEarnStars={handleEarnStars}
+            onCorrectAnswer={() => setProgress((prev) => ({ ...prev, solvedPairs: prev.solvedPairs + 1 }))}
+          />
         )}
         {activeTab === 'exercise' && (
           <ExerciseHub mascotId={activeMascot} onEarnStars={handleEarnStars} />
@@ -241,22 +312,22 @@ export default function App() {
           <FinalSoundDetective
             mascotId={activeMascot}
             onEarnStars={handleEarnStars}
-            onGameComplete={() => {
-              setSolvedFinalSoundsCount((prev) => prev + 5);
-              soundService.playChime();
-            }}
+            onCorrectAnswer={() => setProgress((prev) => ({ ...prev, solvedFinalSounds: prev.solvedFinalSounds + 1 }))}
           />
         )}
 
         {activeTab === 'ninja' && (
-          <StopSoundNinja mascotId={activeMascot} onEarnStars={handleEarnStars} />
+          <StopSoundNinja
+            mascotId={activeMascot}
+            practicedWordIds={progress.practicedStopWordIds}
+            onPracticeWord={handlePracticeStopWord}
+          />
         )}
 
         {activeTab === 'studio' && (
           <VoiceStudio
             mascotId={activeMascot}
-            onEarnStars={handleEarnStars}
-            onRecordCompleted={() => setRecordCount((prev) => prev + 1)}
+            onRecordCompleted={handleRecordCompleted}
           />
         )}
 

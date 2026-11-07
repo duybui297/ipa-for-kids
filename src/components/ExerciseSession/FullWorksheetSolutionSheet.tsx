@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  CheckCircle2, 
-  Volume2, 
-  Printer, 
-  BookOpen, 
-  Sparkles, 
+import {
+  Printer,
   CheckCheck,
   ChevronDown,
   ChevronUp,
@@ -12,8 +8,7 @@ import {
 } from 'lucide-react';
 import {
   PRACTICE_EXAM_SETS,
-  getPracticeSetById,
-  PracticeExamSet
+  getPracticeSetById
 } from '../../data/exerciseWorksheetData';
 import { soundService } from '../../services/speechService';
 

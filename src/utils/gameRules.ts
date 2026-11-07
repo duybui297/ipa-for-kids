@@ -48,19 +48,38 @@ export function evaluateMinimalPairChoice(
   return selectedOption === correctOption;
 }
 
-export function checkUnlockedBadges(
-  stars: number,
-  solvedPairs: number,
-  solvedFinalSounds: number,
-  voiceRecordCount: number
-): string[] {
-  const badges: string[] = [];
+export interface LearningProgress {
+  stars: number;
+  /** Số câu đúng ở mini-quiz Cặp Âm Dễ Nhầm */
+  solvedPairs: number;
+  /** Số câu đúng ở game Thám Tử Âm Cuối */
+  solvedFinalSounds: number;
+  /** Số từ khác nhau đã luyện ở Ninja Chặn Hơi */
+  stopSoundsPracticed: number;
+  /** Số lượt thu âm thành công */
+  voiceRecordCount: number;
+}
 
-  if (stars >= 50) badges.push('badge_star');
-  if (solvedPairs >= 3) badges.push('badge_i_master');
-  if (solvedFinalSounds >= 3) badges.push('badge_final_detective');
-  if (solvedPairs >= 5) badges.push('badge_omnom_candy');
-  if (voiceRecordCount >= 1) badges.push('badge_kpop_mic');
+export const EMPTY_PROGRESS: LearningProgress = {
+  stars: 0,
+  solvedPairs: 0,
+  solvedFinalSounds: 0,
+  stopSoundsPracticed: 0,
+  voiceRecordCount: 0,
+};
 
-  return badges;
+/**
+ * Ngưỡng mở khóa huy hiệu. Phải khớp với mô tả trong STICKER_BADGES (data/ipaData.ts).
+ */
+export const BADGE_RULES: { id: string; isUnlocked: (p: LearningProgress) => boolean }[] = [
+  { id: 'badge_star', isUnlocked: (p) => p.stars >= 50 },
+  { id: 'badge_i_master', isUnlocked: (p) => p.solvedPairs >= 3 },
+  { id: 'badge_final_detective', isUnlocked: (p) => p.solvedFinalSounds >= 3 },
+  { id: 'badge_ninja_stop', isUnlocked: (p) => p.stopSoundsPracticed >= 4 },
+  { id: 'badge_omnom_candy', isUnlocked: (p) => p.solvedPairs >= 10 },
+  { id: 'badge_kpop_mic', isUnlocked: (p) => p.voiceRecordCount >= 5 },
+];
+
+export function checkUnlockedBadges(progress: LearningProgress): string[] {
+  return BADGE_RULES.filter((rule) => rule.isUnlocked(progress)).map((rule) => rule.id);
 }

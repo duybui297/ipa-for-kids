@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Volume2, CheckCircle2, XCircle, Sparkles, HelpCircle, RotateCcw, Home, ArrowRight } from 'lucide-react';
+import { Volume2, CheckCircle2, Sparkles, HelpCircle, RotateCcw, Home } from 'lucide-react';
 import { EXERCISE_3A_DATA, EXERCISE_3B_DATA, Exercise3Set } from '../../data/exerciseWorksheetData';
-import { evaluateExercise3, ScoreResult } from '../../utils/exerciseScoring';
+import { evaluateExercise3, ScoreResult, isRewardEligible, describeReward } from '../../utils/exerciseScoring';
 import { soundService } from '../../services/speechService';
 import { triggerExerciseConfetti } from '../../utils/confetti';
 
 interface Props {
-  onEarnStars: (count: number) => void;
+  onEarnStars: (count: number, subKey?: string) => number;
   data3a?: Exercise3Set;
   data3b?: Exercise3Set;
   examSetTitle?: string;
@@ -27,6 +27,7 @@ export const Exercise3Section: React.FC<Props> = ({
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [scoreResult3a, setScoreResult3a] = useState<ScoreResult | null>(null);
   const [scoreResult3b, setScoreResult3b] = useState<ScoreResult | null>(null);
+  const [awardedStars, setAwardedStars] = useState<Record<'3a' | '3b', number>>({ '3a': 0, '3b': 0 });
 
   const [showExplanation, setShowExplanation] = useState(false);
 
@@ -52,9 +53,10 @@ export const Exercise3Section: React.FC<Props> = ({
     if (!selectedWord) return;
     soundService.playPop();
 
-    // Check how many words already in this house (max 3)
-    const wordsInHouse = Object.entries(assignments).filter(([_, sym]) => sym === houseSymbol);
-    if (wordsInHouse.length >= 3) {
+    // Mỗi nhà chỉ chứa đúng số từ thuộc về nó (dữ liệu chuẩn: 3 từ / nhà)
+    const houseCapacity = currentData.allWords.filter((w) => w.targetSymbol === houseSymbol).length;
+    const wordsInHouse = Object.values(assignments).filter((sym) => sym === houseSymbol).length;
+    if (wordsInHouse >= houseCapacity) {
       soundService.playError();
       return;
     }
@@ -80,12 +82,13 @@ export const Exercise3Section: React.FC<Props> = ({
   const handleCheck = () => {
     const res = evaluateExercise3(activeSubTab, assignments, currentData);
     setCurrentScore(res);
-    if (res.scorePercent >= 75) {
+    const awarded = isRewardEligible(res) ? onEarnStars(res.starsEarned, activeSubTab) : 0;
+    setAwardedStars((prev) => ({ ...prev, [activeSubTab]: awarded }));
+    if (isRewardEligible(res)) {
       if (res.scorePercent < 100) {
         soundService.playChime();
       }
       triggerExerciseConfetti(res.scorePercent);
-      onEarnStars(res.starsEarned);
     } else {
       soundService.playError();
     }
@@ -138,7 +141,7 @@ export const Exercise3Section: React.FC<Props> = ({
                   : 'text-slate-600 hover:text-emerald-700'
               }`}
             >
-              Phần 3a (/i:/, /ɪ/, /e/, /æ/)
+              Phần 3a ({data3a.houses.map((h) => h.symbol).join(', ')})
             </button>
             <button
               onClick={() => {
@@ -151,7 +154,7 @@ export const Exercise3Section: React.FC<Props> = ({
                   : 'text-slate-600 hover:text-emerald-700'
               }`}
             >
-              Phần 3b (/ɒ/, /ɔ:/, /ʊ/, /u:/)
+              Phần 3b ({data3b.houses.map((h) => h.symbol).join(', ')})
             </button>
           </div>
 
@@ -203,7 +206,7 @@ export const Exercise3Section: React.FC<Props> = ({
             </div>
           </div>
           <div className="flex items-center gap-2 font-black text-sm bg-white/80 px-4 py-2 rounded-2xl border shadow-xs">
-            <span>Thưởng: +{currentScore.starsEarned} sao ⭐</span>
+            <span>{describeReward(currentScore, awardedStars[activeSubTab])}</span>
           </div>
         </div>
       )}
@@ -217,7 +220,9 @@ export const Exercise3Section: React.FC<Props> = ({
             .map(([w]) => currentData.allWords.find((item) => item.word === w)!)
             .filter(Boolean);
 
-          const isFull = wordsInThisHouse.length >= 3;
+          const capacity = currentData.allWords.filter((w) => w.targetSymbol === house.symbol).length;
+
+          const isFull = wordsInThisHouse.length >= capacity;
           const isTargeted = selectedWord !== null && !isFull;
 
           return (
@@ -249,7 +254,7 @@ export const Exercise3Section: React.FC<Props> = ({
                     </div>
                   </div>
                   <span className="text-xs font-black bg-white/80 px-2 py-0.5 rounded-full border text-slate-700">
-                    {wordsInThisHouse.length}/3 từ
+                    {wordsInThisHouse.length}/{capacity} từ
                   </span>
                 </div>
 
@@ -324,7 +329,7 @@ export const Exercise3Section: React.FC<Props> = ({
 
               {/* Bottom hint */}
               <div className="pt-2 text-center text-[11px] text-slate-500 italic">
-                {isFull ? 'Đã đủ 3 từ' : 'Còn trống chỗ'}
+                {isFull ? `Đã đủ ${capacity} từ` : 'Còn trống chỗ'}
               </div>
             </div>
           );
