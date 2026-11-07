@@ -1,0 +1,10 @@
+{
+  "name": "IPA Kids Galaxy - Bé Học Phát Âm Chuẩn US",
+  "description": "Ứng dụng học ngữ âm IPA tiếng Anh Mỹ sinh động dành riêng cho học sinh tiểu học với các bạn hoạt hình Chiikawa, Doraemon, Minions, Om Nom, mô hình khẩu hình chi tiết và trò chơi tương tác.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
