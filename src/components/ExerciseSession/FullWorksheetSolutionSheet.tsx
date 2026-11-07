@@ -7,7 +7,8 @@ import {
   Layers
 } from 'lucide-react';
 import {
-  PRACTICE_EXAM_SETS,
+  EXAM_SET_CATEGORIES,
+  getCategoryOfSet,
   getPracticeSetById
 } from '../../data/exerciseWorksheetData';
 import { soundService } from '../../services/speechService';
@@ -68,10 +69,14 @@ export const FullWorksheetSolutionSheet: React.FC<Props> = ({ initialSetId = 1 }
               }}
               className="bg-indigo-950/90 text-white font-bold text-xs sm:text-sm rounded-xl px-3 py-2 border border-indigo-300/50 focus:outline-hidden focus:ring-2 focus:ring-pink-400 cursor-pointer w-full sm:w-auto"
             >
-              {PRACTICE_EXAM_SETS.map((s) => (
-                <option key={s.id} value={s.id} className="bg-slate-900 text-white py-1">
-                  {s.title} ({s.topic})
-                </option>
+              {EXAM_SET_CATEGORIES.map((c) => (
+                <optgroup key={c.id} label={c.label}>
+                  {c.sets.map((s) => (
+                    <option key={s.id} value={s.id} className="bg-slate-900 text-white py-1">
+                      {s.title} ({s.topic})
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
 
@@ -89,7 +94,7 @@ export const FullWorksheetSolutionSheet: React.FC<Props> = ({ initialSetId = 1 }
               In / Xuất phiếu lời giải {currentSet.title.split(':')[0]}
             </button>
             <div className="text-xs text-pink-200">
-              Tổng cộng: 6 phần bài tập • Đầy đủ 44 âm & 12 nguyên âm đơn trọng tâm
+              Tổng cộng: 6 phần bài tập • {getCategoryOfSet(currentSet.id).description}
             </div>
           </div>
         </div>
@@ -187,9 +192,9 @@ export const FullWorksheetSolutionSheet: React.FC<Props> = ({ initialSetId = 1 }
               </span>
               <div>
                 <h3 className="font-black text-lg text-slate-800">
-                  Bài 2: Nối ký hiệu với từ (12 ký hiệu nguyên âm đơn)
+                  Bài 2: Nối ký hiệu với từ ({currentSet.exercise2Symbols.length} ký hiệu {getCategoryOfSet(currentSet.id).label.toLowerCase()})
                 </h3>
-                <p className="text-xs text-slate-500">12 nguyên âm đơn chuẩn tiếng Anh</p>
+                <p className="text-xs text-slate-500">{getCategoryOfSet(currentSet.id).description}</p>
               </div>
             </div>
             {expandedCards.b2 ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}

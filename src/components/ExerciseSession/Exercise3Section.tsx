@@ -182,7 +182,7 @@ export const Exercise3Section: React.FC<Props> = ({
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            Kiểm tra ({assignedCount}/12)
+            Kiểm tra ({assignedCount}/{currentData.allWords.length})
           </button>
         </div>
       </div>
@@ -353,7 +353,7 @@ export const Exercise3Section: React.FC<Props> = ({
         {unassignedWords.length === 0 ? (
           <div className="text-center py-6 text-sm text-emerald-700 font-bold flex items-center justify-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            <span>Bé đã xếp hết tất cả 12 từ vào các ngôi nhà! Bấm "Kiểm tra" nhé!</span>
+            <span>Bé đã xếp hết tất cả {currentData.allWords.length} từ vào các ngôi nhà! Bấm "Kiểm tra" nhé!</span>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2.5">

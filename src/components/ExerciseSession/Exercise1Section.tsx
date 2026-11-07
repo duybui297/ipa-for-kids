@@ -73,7 +73,7 @@ export const Exercise1Section: React.FC<Props> = ({
                 {examSetTitle}
               </span>
             )}
-            <span className="text-xs text-slate-500 font-medium">8 câu hỏi đôi âm</span>
+            <span className="text-xs text-slate-500 font-medium">{questions.length} câu hỏi đôi âm</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 mt-1 font-heading">
             Luyện Tai: Nghe Cô/Thầy Phát Âm Và Khoanh A hoặc B

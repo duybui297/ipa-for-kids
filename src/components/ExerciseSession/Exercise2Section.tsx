@@ -102,7 +102,7 @@ export const Exercise2Section: React.FC<Props> = ({
                 {examSetTitle}
               </span>
             )}
-            <span className="text-xs text-slate-500 font-medium">12 nguyên âm đơn</span>
+            <span className="text-xs text-slate-500 font-medium">{symbols.length} ký hiệu nguyên âm</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 mt-1 font-heading">
             Cầu Nối Thần Kỳ: Ký Hiệu IPA & Từ Vựng
@@ -126,7 +126,7 @@ export const Exercise2Section: React.FC<Props> = ({
             className="px-3.5 py-2 rounded-2xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <HelpCircle className="w-4 h-4" />
-            {showExplanation ? 'Ẩn lời giải' : 'Xem lời giải 12 cặp'}
+            {showExplanation ? 'Ẩn lời giải' : `Xem lời giải ${symbols.length} cặp`}
           </button>
           <button
             onClick={handleCheck}
@@ -169,12 +169,12 @@ export const Exercise2Section: React.FC<Props> = ({
 
       {/* Matching Interactive Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: 12 IPA Symbols */}
+        {/* Left Column: IPA Symbols */}
         <div className="bg-white rounded-3xl p-5 border-2 border-pink-100 shadow-xs">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
             <h3 className="font-black text-base text-pink-700 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 text-xs flex items-center justify-center font-bold">1</span>
-              12 Ký Hiệu Nguyên Âm
+              {symbols.length} Ký Hiệu Nguyên Âm
             </h3>
             <span className="text-xs text-slate-400">
               {selectedSymbol ? 'Đã chọn: ' + selectedSymbol + ' (chọn từ bên phải)' : 'Bấm để chọn ký hiệu'}
@@ -258,12 +258,12 @@ export const Exercise2Section: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Right Column: 12 Words (A to L) */}
+        {/* Right Column: Words (A, B, C…) */}
         <div className="bg-white rounded-3xl p-5 border-2 border-indigo-100 shadow-xs">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
             <h3 className="font-black text-base text-indigo-700 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">2</span>
-              12 Từ Vựng (A - L)
+              {words.length} Từ Vựng (A - {words[words.length - 1]?.id})
             </h3>
             <span className="text-xs text-slate-400">Bấm để nối với ký hiệu đang chọn</span>
           </div>
@@ -329,7 +329,7 @@ export const Exercise2Section: React.FC<Props> = ({
         <div className="bg-purple-50/80 border-2 border-purple-200 rounded-3xl p-5 animate-fade-in space-y-3">
           <div className="flex items-center gap-2 font-black text-purple-900 text-base">
             <Sparkles className="w-5 h-5 text-purple-600" />
-            <span>Bảng Lời Giải Chi Tiết Bài 2 (12 Cặp Ký Hiệu & Từ Vựng Chuẩn)</span>
+            <span>Bảng Lời Giải Chi Tiết Bài 2 ({symbols.length} Cặp Ký Hiệu & Từ Vựng Chuẩn)</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
             {symbols.map((item) => (

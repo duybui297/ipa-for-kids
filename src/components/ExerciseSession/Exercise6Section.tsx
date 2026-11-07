@@ -71,7 +71,7 @@ export const Exercise6Section: React.FC<Props> = ({
                 {examSetTitle}
               </span>
             )}
-            <span className="text-xs text-slate-500 font-medium">8 câu luyện nghe biểu tượng</span>
+            <span className="text-xs text-slate-500 font-medium">{questions.length} câu luyện nghe biểu tượng</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 mt-1 font-heading">
             Luyện Tai Bắt Ký Hiệu IPA

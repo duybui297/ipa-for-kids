@@ -108,7 +108,7 @@ export function evaluateExercise4(
   return buildScoreResult(countCorrectChoices(answers, data), data.length, {
     perfect: 'Kỳ diệu! Điền đúng 100% phiên âm IPA!',
     great: 'Bé điền ký hiệu rất chuẩn xác!',
-    good: 'Làm tốt lắm, xem kỹ lại dấu hai chấm nhé!',
+    good: 'Làm tốt lắm, xem kỹ lại các ký hiệu bị nhầm nhé!',
     tryAgain: 'Bé rèn luyện thêm nhé!',
   });
 }
@@ -132,7 +132,7 @@ export function evaluateExercise6(
   return buildScoreResult(countCorrectChoices(answers, data), data.length, {
     perfect: 'Đỉnh cao! Đôi tai vàng nhận diện âm thanh tuyệt đối!',
     great: 'Bé nghe và bắt âm rất nhạy!',
-    good: 'Khá lắm! Chú ý dấu dài : khi nghe nhé!',
+    good: 'Khá lắm! Nghe thật kỹ để phân biệt các âm gần giống nhau nhé!',
     tryAgain: 'Bé luyện nghe thêm nhé!',
   });
 }

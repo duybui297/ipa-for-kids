@@ -64,7 +64,7 @@ export const Exercise5Section: React.FC<Props> = ({
                 {examSetTitle}
               </span>
             )}
-            <span className="text-xs text-slate-500 font-medium">6 câu hỏi 4 lựa chọn</span>
+            <span className="text-xs text-slate-500 font-medium">{questions.length} câu hỏi 4 lựa chọn</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 mt-1 font-heading">
             Thám Tử Truy Tìm Âm Khác Biệt

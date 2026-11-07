@@ -14,10 +14,12 @@ import { SET_12 } from './set12';
 import { SET_13 } from './set13';
 import { SET_14 } from './set14';
 import { SET_15 } from './set15';
+import { DIPHTHONG_EXAM_SETS } from './diphthong';
 
 export * from './types';
 
-export const PRACTICE_EXAM_SETS: PracticeExamSet[] = [
+/** 15 bộ đề nguyên âm đơn (id 1–15). */
+export const MONOPHTHONG_EXAM_SETS: PracticeExamSet[] = [
   SET_1,
   SET_2,
   SET_3,
@@ -35,7 +37,43 @@ export const PRACTICE_EXAM_SETS: PracticeExamSet[] = [
   SET_15
 ];
 
+export { DIPHTHONG_EXAM_SETS };
+
+export type ExamSetCategoryId = 'monophthong' | 'diphthong';
+
+export interface ExamSetCategory {
+  id: ExamSetCategoryId;
+  label: string;
+  shortLabel: string;
+  description: string;
+  sets: PracticeExamSet[];
+}
+
+export const EXAM_SET_CATEGORIES: ExamSetCategory[] = [
+  {
+    id: 'monophthong',
+    label: 'Nguyên âm đơn',
+    shortLabel: 'Âm đơn',
+    description: '12 nguyên âm đơn: /i:/, /ɪ/, /e/, /æ/, /ʌ/, /ɑ:/, /ɒ/, /ɔ:/, /ʊ/, /u:/, /ɜ:/, /ə/',
+    sets: MONOPHTHONG_EXAM_SETS
+  },
+  {
+    id: 'diphthong',
+    label: 'Nguyên âm đôi',
+    shortLabel: 'Âm đôi',
+    description: '8 nguyên âm đôi: /eɪ/, /aɪ/, /ɔɪ/, /əʊ/, /aʊ/, /ɪə/, /eə/, /ʊə/ (phiên âm giọng Anh)',
+    sets: DIPHTHONG_EXAM_SETS
+  }
+];
+
+/** Tất cả bộ đề (âm đơn + âm đôi). */
+export const PRACTICE_EXAM_SETS: PracticeExamSet[] = [...MONOPHTHONG_EXAM_SETS, ...DIPHTHONG_EXAM_SETS];
+
 export function getPracticeSetById(id: number): PracticeExamSet {
   const found = PRACTICE_EXAM_SETS.find((s) => s.id === id);
   return found || SET_1;
+}
+
+export function getCategoryOfSet(id: number): ExamSetCategory {
+  return EXAM_SET_CATEGORIES.find((c) => c.sets.some((s) => s.id === id)) ?? EXAM_SET_CATEGORIES[0];
 }
