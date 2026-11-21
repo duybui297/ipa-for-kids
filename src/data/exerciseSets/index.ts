@@ -15,6 +15,7 @@ import { SET_13 } from './set13';
 import { SET_14 } from './set14';
 import { SET_15 } from './set15';
 import { DIPHTHONG_EXAM_SETS } from './diphthong';
+import { buildMixedSets } from './mixed';
 
 export * from './types';
 
@@ -39,7 +40,10 @@ export const MONOPHTHONG_EXAM_SETS: PracticeExamSet[] = [
 
 export { DIPHTHONG_EXAM_SETS };
 
-export type ExamSetCategoryId = 'monophthong' | 'diphthong';
+/** Đề tổng hợp: trộn câu hỏi từ bộ âm đơn và âm đôi (id 201+). */
+export const MIXED_EXAM_SETS: PracticeExamSet[] = buildMixedSets(MONOPHTHONG_EXAM_SETS, DIPHTHONG_EXAM_SETS);
+
+export type ExamSetCategoryId = 'monophthong' | 'diphthong' | 'mixed';
 
 export interface ExamSetCategory {
   id: ExamSetCategoryId;
@@ -63,11 +67,18 @@ export const EXAM_SET_CATEGORIES: ExamSetCategory[] = [
     shortLabel: 'Âm đôi',
     description: '8 nguyên âm đôi: /eɪ/, /aɪ/, /ɔɪ/, /əʊ/, /aʊ/, /ɪə/, /eə/, /ʊə/ (phiên âm giọng Anh)',
     sets: DIPHTHONG_EXAM_SETS
+  },
+  {
+    id: 'mixed',
+    label: 'Đề tổng hợp',
+    shortLabel: 'Tổng hợp',
+    description: 'Trộn lẫn câu hỏi nguyên âm đơn và nguyên âm đôi từ các bộ đề đã học',
+    sets: MIXED_EXAM_SETS
   }
 ];
 
-/** Tất cả bộ đề (âm đơn + âm đôi). */
-export const PRACTICE_EXAM_SETS: PracticeExamSet[] = [...MONOPHTHONG_EXAM_SETS, ...DIPHTHONG_EXAM_SETS];
+/** Tất cả bộ đề (âm đơn + âm đôi + tổng hợp). */
+export const PRACTICE_EXAM_SETS: PracticeExamSet[] = [...MONOPHTHONG_EXAM_SETS, ...DIPHTHONG_EXAM_SETS, ...MIXED_EXAM_SETS];
 
 export function getPracticeSetById(id: number): PracticeExamSet {
   const found = PRACTICE_EXAM_SETS.find((s) => s.id === id);

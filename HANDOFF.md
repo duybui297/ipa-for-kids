@@ -1,7 +1,7 @@
 # Handoff: IPA Kids Galaxy
 
 Ứng dụng web giúp học sinh tiểu học (khoảng lớp 3) học phát âm tiếng Anh qua bảng 44 âm IPA, các cặp âm dễ nhầm,
-mini-game và **29 bộ đề luyện tập** có chấm điểm tự động. Giao diện tiếng Việt, mascot hoạt hình, thưởng sao và huy hiệu.
+mini-game và **39 bộ đề luyện tập** (15 âm đơn, 14 âm đôi, 10 đề tổng hợp) có chấm điểm tự động. Giao diện tiếng Việt, mascot hoạt hình, thưởng sao và huy hiệu.
 
 - Repo: `duybui297/ipa-for-kids`
 - Chạy tại: `https://www.ethanbui.net/products/ipa-for-kids` (cấu hình triển khai xem `DEPLOY.md`, không lặp lại ở đây)
@@ -13,7 +13,7 @@ mini-game và **29 bộ đề luyện tập** có chấm điểm tự động. G
 ```bash
 npm install
 npm run dev     # http://localhost:3000/products/ipa-for-kids/
-npm test        # unit test + kiểm tra tính nhất quán dữ liệu 29 bộ đề
+npm test        # unit test + kiểm tra tính nhất quán dữ liệu tất cả bộ đề
 npm run lint    # tsc --noEmit
 npm run build
 ```
@@ -27,7 +27,7 @@ Trước khi merge, chạy đủ `npm test` và `npm run lint`. Test dữ liệu
 | --- | --- | --- |
 | Bảng 44 Âm IPA | `components/IPAChart/IPAExplorer.tsx`, `MouthLab/MouthVisualizer.tsx` | Dữ liệu âm: `data/ipaData.ts` |
 | Phân Biệt Cặp Âm | `components/ConfusingPairs/ConfusingPairsHub.tsx` | 11 cặp, `data/confusingPairsData.ts` |
-| Phòng Bài Tập | `components/ExerciseSession/*` | 15 bộ âm đơn + 14 bộ âm đôi, 6 bài/bộ |
+| Phòng Bài Tập | `components/ExerciseSession/*` | 15 bộ âm đơn + 14 bộ âm đôi + 10 đề tổng hợp, 6 bài/bộ |
 | Thám Tử Âm Cuối | `components/Games/FinalSoundDetective.tsx` | `FINAL_SOUND_QUESTIONS` trong `ipaData.ts` |
 | Ninja Chặn Hơi | `components/Games/StopSoundNinja.tsx` | 4 từ, `STOP_SOUND_QUESTIONS` |
 | Studio Thu Âm | `components/PracticeStudio/VoiceStudio.tsx` | MediaRecorder; không chấm phát âm |
@@ -43,13 +43,19 @@ src/data/exerciseSets/
   types.ts                 # PracticeExamSet và kiểu của 6 bài
   set1.ts … set15.ts       # 15 bộ nguyên âm đơn (id 1–15)
   diphthong/dset1.ts … 14  # 14 bộ nguyên âm đôi (id 101–114)
+  mixed.ts                 # sinh 10 đề tổng hợp (id 201–210) bằng cách trộn câu hỏi của 2 nhóm trên
   index.ts                 # EXAM_SET_CATEGORIES, PRACTICE_EXAM_SETS (tất cả), getPracticeSetById, getCategoryOfSet
   exerciseSets.test.ts     # kiểm tra tính nhất quán, chạy trên mọi bộ
 ```
 
 - 6 dạng bài: (1) nghe và khoanh A/B, (2) nối ký hiệu với từ, (3a/3b) xếp từ vào "ngôi nhà" âm,
   (4) điền ký hiệu còn thiếu, (5) tìm từ khác âm, (6) nghe và chọn ký hiệu.
-- `ExerciseHub.tsx` có nút chọn nhóm **Nguyên âm đơn / Nguyên âm đôi**. Số thứ tự "Bộ 01…" hiển thị theo vị trí
+- **Đề tổng hợp** không có file dữ liệu riêng: `mixed.ts` lấy câu hỏi có sẵn của bộ âm đơn và âm đôi
+  (mỗi bài khoảng nửa âm đơn, nửa âm đôi) rồi xáo trộn bằng bộ số ngẫu nhiên có hạt giống cố định, nên đề luôn
+  giống nhau giữa các lần mở app. Câu hỏi không lặp giữa các đề cho tới khi dùng hết kho. Phiên âm được chuẩn hoá
+  ":" → "ː". Sửa hoặc thêm câu ở bộ âm đơn/âm đôi sẽ làm nội dung đề tổng hợp thay đổi theo (điểm cao nhất cũ
+  của đề tổng hợp vẫn giữ theo id). Đổi `SEED` hoặc `MIXED_SET_COUNT` trong `mixed.ts` để có bộ đề khác.
+- `ExerciseHub.tsx` có nút chọn nhóm **Nguyên âm đơn / Nguyên âm đôi / Đề tổng hợp**. Số thứ tự "Bộ 01…" hiển thị theo vị trí
   trong nhóm, **không** theo `id`. `id` phải duy nhất trên toàn bộ vì được dùng làm key lưu điểm.
 - Số câu, số ký hiệu, số nhà trong giao diện đều lấy từ dữ liệu, không ghi cứng. Bộ âm đôi có Bài 2 chỉ 7–8 ký hiệu
   và Bài 3b có lúc chỉ 3 nhà.
@@ -89,6 +95,7 @@ Chấm điểm: `utils/exerciseScoring.ts`. Mỗi câu đúng được 2 sao. C�
 2. **Subpath và đồng bộ tiến độ** (`f783457`, `13fece7`): app phục vụ dưới `/products/ipa-for-kids/`,
    thêm đăng nhập phụ huynh và đồng bộ Supabase.
 3. **14 bộ đề nguyên âm đôi** (`a20e00f`): thêm nhóm âm đôi, bỏ các số lượng ghi cứng trong giao diện.
+4. **10 đề tổng hợp**: trộn câu hỏi âm đơn và âm đôi (`data/exerciseSets/mixed.ts`).
 
 ## 6. Việc còn mở / cần quyết định
 

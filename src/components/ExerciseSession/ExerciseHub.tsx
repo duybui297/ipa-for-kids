@@ -28,6 +28,8 @@ interface Props {
 
 export type ExerciseTab = 'b1' | 'b2' | 'b3' | 'b4' | 'b5' | 'b6' | 'solutions';
 
+const CATEGORY_ICONS: Record<ExamSetCategoryId, string> = { monophthong: '🔤', diphthong: '🔀', mixed: '🎲' };
+
 // Emoji cho 15 bộ âm đơn (bộ âm đôi dùng trường `icon` trong dữ liệu)
 const SET_ICONS: Record<number, string> = {
   1: '🐶',
@@ -103,7 +105,8 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars, bestStars,
   };
 
   const houseCount = currentSet.exercise3a.houses.length + currentSet.exercise3b.houses.length;
-  const soundKind = categoryId === 'diphthong' ? 'nguyên âm đôi' : 'nguyên âm đơn';
+  const soundKind =
+    categoryId === 'diphthong' ? 'nguyên âm đôi' : categoryId === 'mixed' ? 'âm đơn & đôi' : 'nguyên âm đơn';
 
   const exerciseNavItems = [
     {
@@ -162,7 +165,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars, bestStars,
                 Phòng Luyện Thi {totalSets} Bộ Đề Chuẩn IPA
               </span>
               <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
-                Âm Đơn & Âm Đôi • Kèm Lời Giải 100%
+                Âm Đơn • Âm Đôi • Đề Tổng Hợp • Kèm Lời Giải 100%
               </span>
               <span className="bg-purple-100 text-purple-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-purple-200">
                 Chuẩn 44 Âm IPA
@@ -213,7 +216,7 @@ export const ExerciseHub: React.FC<Props> = ({ mascotId, onEarnStars, bestStars,
                     : 'bg-white border-indigo-200 text-indigo-800 hover:bg-indigo-50'
                 }`}
               >
-                <span>{c.id === 'diphthong' ? '🔀' : '🔤'}</span>
+                <span>{CATEGORY_ICONS[c.id]}</span>
                 {c.label}
                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20' : 'bg-indigo-100'}`}>
                   {c.sets.length} bộ
